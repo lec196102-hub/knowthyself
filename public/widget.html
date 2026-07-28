@@ -89,7 +89,7 @@
       border-bottom: 1px solid var(--border-weak);
     }
     .stage.has-image { display: block; }
-    .stage img {
+    .stage img, .stage video {
       width: 100%; height: 100%; object-fit: cover; display: block;
       animation: windowIn .55s ease;
     }
@@ -128,7 +128,7 @@
       transition: border-color .2s;
     }
     .pop .preview.has-image { border-style: solid; border-color: var(--border-weak); }
-    .pop .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pop .preview img, .pop .preview video { width: 100%; height: 100%; object-fit: cover; display: block; }
     .pop .preview-empty {
       position: absolute; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -329,7 +329,7 @@
 
     <!-- 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 -->
     <div class="stage" id="stage">
-      <img id="stageImg" alt="" />
+      <div id="stageMedia"></div>
       <div class="stage-status" id="petStatus">在陪着你</div>
     </div>
 
@@ -338,7 +338,7 @@
       <!-- 顶部图片 -->
       <div>
         <div class="pop-section-head">
-          <span class="pop-section-title">顶部图片</span>
+          <span class="pop-section-title">顶部形象</span>
           <span class="pop-section-hint">不设则不显示舞台</span>
         </div>
         <div class="preview" id="popPreview">
@@ -349,7 +349,7 @@
               <path d="M21 17l-5-5-7 7"/>
             </svg>
             <b>未设置图片</b>
-            <small>支持 JPG / PNG / WebP</small>
+            <small>支持 图片 / GIF / 视频(MP4·WebM)</small>
           </div>
         </div>
         <div class="meta" id="popMeta">
@@ -363,11 +363,11 @@
               <path d="M17 8l-5-5-5 5"/>
               <path d="M12 3v12"/>
             </svg>
-            <span>选择图片</span>
+            <span>选择图片 / 视频</span>
           </button>
           <button class="pbtn danger" id="popClearBtn" type="button" disabled>移除</button>
         </div>
-        <input type="file" id="fileInput" accept="image/*" style="display:none" />
+        <input type="file" id="fileInput" accept="image/*,video/*" style="display:none" />
       </div>
 
       <div class="pop-divider"></div>
@@ -637,6 +637,55 @@ window.electronAPI = window.electronAPI || {
 // ====== 个性化：顶部舞台图片（仅存本机 localStorage） ======
 const STAGE_KEY = "tj_stage_image";
 const STAGE_META_KEY = "tj_stage_meta";
+const STAGE_SRC_KEY = "tj_stage_src";   // "idb" = GIF/视频(IndexedDB)；"ls" = 普通图片(localStorage)
+let stageUrl = null;                    // 当前媒体 object URL，render 时复用/释放
+
+// IndexedDB：存 GIF / 视频原始 Blob（不重新编码，保留动效）；普通图片仍走 localStorage
+const STAGE_DB_NAME = "tj_stage_db";
+const STAGE_STORE = "media";
+const STAGE_REC_KEY = "current";
+function openStageDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(STAGE_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(STAGE_STORE)) db.createObjectStore(STAGE_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function saveStageMedia(rec) {
+  const db = await openStageDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(STAGE_STORE, "readwrite");
+    tx.objectStore(STAGE_STORE).put(rec, STAGE_REC_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+async function loadStageMedia() {
+  const db = await openStageDB();
+  const rec = await new Promise((resolve, reject) => {
+    const tx = db.transaction(STAGE_STORE, "readonly");
+    const get = tx.objectStore(STAGE_STORE).get(STAGE_REC_KEY);
+    get.onsuccess = () => resolve(get.result || null);
+    get.onerror = () => reject(get.error);
+  });
+  db.close();
+  return rec;
+}
+async function clearStageMedia() {
+  const db = await openStageDB();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(STAGE_STORE, "readwrite");
+    tx.objectStore(STAGE_STORE).delete(STAGE_REC_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
 
 function formatSize(bytes) {
   if (!bytes && bytes !== 0) return "";
@@ -645,35 +694,56 @@ function formatSize(bytes) {
   return (bytes / 1024 / 1024).toFixed(2) + " MB";
 }
 
-function renderStage() {
+async function renderStage() {
   const stage = document.getElementById("stage");
-  const img = document.getElementById("stageImg");
+  const mediaBox = document.getElementById("stageMedia");
   const pv = document.getElementById("popPreview");
   const meta = document.getElementById("popMeta");
   const metaName = document.getElementById("popMetaName");
   const metaSize = document.getElementById("popMetaSize");
   const clearBtn = document.getElementById("popClearBtn");
-  const data = localStorage.getItem(STAGE_KEY);
-  if (data) {
+
+  // 读取当前设置的媒体：优先按来源标记（IDB 存 GIF/视频，localStorage 存普通图片），兼容旧数据
+  let rec = null;
+  const srcPref = localStorage.getItem(STAGE_SRC_KEY);
+  if (srcPref === "idb") {
+    try { rec = await loadStageMedia(); } catch (_) {}
+  } else if (srcPref === "ls") {
+    const d = localStorage.getItem(STAGE_KEY);
+    if (d) rec = { type: "image", src: d, name: "图片", legacy: true };
+  } else {
+    try { rec = await loadStageMedia(); } catch (_) {}
+    if (!rec && localStorage.getItem(STAGE_KEY)) {
+      rec = { type: "image", src: localStorage.getItem(STAGE_KEY), name: "图片", legacy: true };
+    }
+  }
+
+  if (rec) {
     stage.classList.add("has-image");
-    img.src = data;
     pv.classList.add("has-image");
-    pv.innerHTML = `<img src="${data}" alt="" />`;
     clearBtn.disabled = false;
-    try {
-      const m = JSON.parse(localStorage.getItem(STAGE_META_KEY) || "null");
-      if (m) {
-        meta.classList.add("show");
-        metaName.textContent = m.name || "—";
-        const dim = m.w ? `${m.w}×${m.h} · ` : "";
-        metaSize.textContent = dim + formatSize(m.size);
-      } else {
-        meta.classList.remove("show");
-      }
-    } catch (_) { meta.classList.remove("show"); }
+    if (stageUrl) { URL.revokeObjectURL(stageUrl); stageUrl = null; }
+    const url = rec.legacy ? rec.src : URL.createObjectURL(rec.blob);
+    if (!rec.legacy) stageUrl = url;
+    const isVid = !rec.legacy && (rec.isVideo || (rec.type && rec.type.startsWith("video/")));
+    const tag = isVid
+      ? `<video src="${url}" autoplay loop muted playsinline></video>`
+      : `<img src="${url}" alt="" />`;
+    mediaBox.innerHTML = tag;
+    pv.innerHTML = tag;
+    if (rec.name || (rec.size && !rec.legacy)) {
+      meta.classList.add("show");
+      metaName.textContent = rec.name || "媒体";
+      const dim = (rec.w && rec.h) ? `${rec.w}×${rec.h} · ` : "";
+      const sz = rec.legacy ? "—" : formatSize(rec.size);
+      metaSize.textContent = dim + sz;
+    } else {
+      meta.classList.remove("show");
+    }
   } else {
     stage.classList.remove("has-image");
-    img.removeAttribute("src");
+    if (stageUrl) { URL.revokeObjectURL(stageUrl); stageUrl = null; }
+    mediaBox.innerHTML = "";
     pv.classList.remove("has-image");
     pv.innerHTML =
       '<div class="preview-empty" id="popEmpty">' +
@@ -682,8 +752,8 @@ function renderStage() {
           '<circle cx="9" cy="11" r="1.6"/>' +
           '<path d="M21 17l-5-5-7 7"/>' +
         '</svg>' +
-        '<b>未设置图片</b>' +
-        '<small>支持 JPG / PNG / WebP</small>' +
+        '<b>未设置形象</b>' +
+        '<small>支持 图片 / GIF / 视频(MP4·WebM)</small>' +
       '</div>';
     clearBtn.disabled = true;
     meta.classList.remove("show");
@@ -692,39 +762,68 @@ function renderStage() {
 function togglePop() {
   document.getElementById("pop").classList.toggle("show");
 }
-function onStageFile(e) {
+async function onStageFile(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const src = reader.result;
-    const im = new Image();
-    im.onload = () => {
-      const maxW = 480;
-      const scale = Math.min(1, maxW / im.width);
-      const w = Math.max(1, Math.round(im.width * scale));
-      const h = Math.max(1, Math.round(im.height * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      canvas.getContext("2d").drawImage(im, 0, 0, w, h);
-      let out = src;
-      try { out = canvas.toDataURL("image/jpeg", 0.82); } catch (_) {}
-      localStorage.setItem(STAGE_KEY, out);
-      try {
-        localStorage.setItem(STAGE_META_KEY, JSON.stringify({
-          name: file.name, size: file.size, w: w, h: h
-        }));
-      } catch (_) {}
-      renderStage();
+  const isVideo = file.type.startsWith("video/");
+  const isGif = file.type === "image/gif";
+
+  if (isVideo || isGif) {
+    // GIF / 视频：原始 Blob 存 IndexedDB，不重新编码（保留动效）
+    const rec = { blob: file, type: file.type, name: file.name, size: file.size, w: 0, h: 0, isVideo: isVideo };
+    try {
+      await new Promise((res) => {
+        const probe = document.createElement(isVideo ? "video" : "img");
+        probe.preload = "metadata";
+        probe.onloadedmetadata = probe.onload = () => {
+          rec.w = probe.videoWidth || probe.width || 0;
+          rec.h = probe.videoHeight || probe.height || 0;
+          res();
+        };
+        probe.onerror = () => res();
+        probe.src = URL.createObjectURL(file);
+      });
+    } catch (_) {}
+    try { await saveStageMedia(rec); } catch (_) {}
+    localStorage.setItem(STAGE_SRC_KEY, "idb");
+    localStorage.removeItem(STAGE_KEY);
+    localStorage.removeItem(STAGE_META_KEY);
+    renderStage();
+  } else {
+    // 普通图片：缩放压缩后存 localStorage（轻量、兼容旧路径）
+    const reader = new FileReader();
+    reader.onload = () => {
+      const src = reader.result;
+      const im = new Image();
+      im.onload = () => {
+        const maxW = 480;
+        const scale = Math.min(1, maxW / im.width);
+        const w = Math.max(1, Math.round(im.width * scale));
+        const h = Math.max(1, Math.round(im.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(im, 0, 0, w, h);
+        let out = src;
+        try { out = canvas.toDataURL("image/jpeg", 0.82); } catch (_) {}
+        localStorage.setItem(STAGE_KEY, out);
+        try {
+          localStorage.setItem(STAGE_META_KEY, JSON.stringify({ name: file.name, size: file.size, w: w, h: h }));
+        } catch (_) {}
+        localStorage.setItem(STAGE_SRC_KEY, "ls");
+        clearStageMedia().catch(() => {});
+        renderStage();
+      };
+      im.src = src;
     };
-    im.src = src;
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  }
   e.target.value = "";
 }
 function clearStage() {
   localStorage.removeItem(STAGE_KEY);
   localStorage.removeItem(STAGE_META_KEY);
+  localStorage.removeItem(STAGE_SRC_KEY);
+  clearStageMedia().catch(() => {});
   renderStage();
 }
 
