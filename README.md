@@ -1,5 +1,15 @@
 # 老己 Triune Journal
 
+<p align="center">
+  <img alt="license" src="https://img.shields.io/github/license/lec196102-hub/knowthyself?style=flat-square">
+  <img alt="release" src="https://img.shields.io/github/v/release/lec196102-hub/knowthyself?style=flat-square">
+  <img alt="last commit" src="https://img.shields.io/github/last-commit/lec196102-hub/knowthyself?style=flat-square">
+  <img alt="platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue?style=flat-square">
+  <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-green?style=flat-square">
+  <img alt="issues" src="https://img.shields.io/github/issues/lec196102-hub/knowthyself?style=flat-square">
+  <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square">
+</p>
+
 > **本地优先 · 隐私守护 · 越用越懂你的 AI 情绪陪伴桌宠**
 
 「老己」是一个跑在你**自己电脑上**的 AI 陪伴桌面宠物。它读你的日记、陪你聊天，越用越像你；但它**不联网、不收集、不上传**——你的心事只属于你。
