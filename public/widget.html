@@ -94,7 +94,11 @@
       border-bottom: 1px solid var(--border-weak);
     }
     .stage.has-image { display: block; }
-    .stage img, .stage video {
+    #stageMedia {
+      /* 关键：覆盖住整个 .stage，让 img 的 object-fit:contain 真正在 stage 框内生效 */
+      position: absolute; inset: 0;
+    }
+    #stageMedia img, #stageMedia video {
       width: 100%; height: 100%;
       object-fit: contain;          /* 完整显示，不裁切 */
       background: transparent;
