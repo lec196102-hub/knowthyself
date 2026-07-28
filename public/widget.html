@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triune · 陪伴</title>
+  <script>
+    (function(){try{var m=localStorage.getItem('tj_theme')||'system';var t=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.dataset.theme=t;}catch(e){}})();
+  </script>
+  <link rel="stylesheet" href="/theme.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: transparent;
+      font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; user-select: none; padding: 18px;
+    }
+
+    /* 透明玻璃浮窗 —— 真正透明靠 Electron transparent:true；浏览器里呈毛玻璃质感 */
+    .widget {
+      width: min(94vw, 400px); height: min(86vh, 580px);
+      display: flex; flex-direction: column; overflow: hidden; position: relative;
+      background: var(--w-bg);
+      -webkit-backdrop-filter: blur(26px) saturate(170%);
+      backdrop-filter: blur(26px) saturate(170%);
+      border-radius: 24px;
+      box-shadow: var(--w-shadow);
+      color: var(--text);
+      animation: windowIn .55s cubic-bezier(.22, 1, .36, 1);
+    }
+    @keyframes windowIn {
+      from { opacity: 0; transform: translateY(16px) scale(.955); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* 渐变描边：一层发丝级高光，提升"精致感" */
+    .widget::before {
+      content: ""; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
+      background: linear-gradient(155deg, var(--hairline-a), rgba(255,255,255,.05) 42%, var(--hairline-b));
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    /* 极简拖拽条：不占视觉空间 */
+    .bar {
+      -webkit-app-region: drag;
+      height: 40px; flex: 0 0 auto; position: relative; z-index: 2;
+      display: flex; align-items: center; gap: 8px; padding: 0 12px;
+      border-bottom: 1px solid var(--border-weak);
+    }
+    .bar .logo {
+      width: 18px; height: 18px; border-radius: 6px;
+      background: linear-gradient(135deg, #378ADD, #7F77DD);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; color: #fff; box-shadow: 0 2px 8px rgba(55,138,221,.45);
+    }
+    .bar .name { font-size: 12px; font-weight: 600; color: var(--name); letter-spacing: .3px; }
+    .bar .spacer { flex: 1; }
+    .bar .mini {
+      -webkit-app-region: no-drag; width: 22px; height: 22px; border-radius: 50%;
+      border: none; background: var(--btn-ghost); color: var(--name);
+      cursor: pointer; font-size: 11px; line-height: 1; transition: background .15s, transform .15s;
+    }
+    .bar .mini:hover { background: var(--btn-ghost-hover); transform: translateY(-1px); }
+    .bar .mini:active { transform: translateY(0); }
+    .bar .mini.close { background: rgba(248, 81, 73, 0.9); color: #fff; }
+    .bar .mini.close:hover { background: rgb(248, 81, 73); }
+
+    /* ====== 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 ====== */
+    .stage {
+      flex: 0 0 auto; display: none; position: relative;
+      height: 128px; overflow: hidden;
+      border-bottom: 1px solid var(--border-weak);
+    }
+    .stage.has-image { display: block; }
+    .stage img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      animation: windowIn .55s ease;
+    }
+    /* 图片上的状态浮条（仅在有图时显示） */
+    .stage .stage-status {
+      position: absolute; left: 12px; bottom: 10px;
+      font-size: 11.5px; color: #fff; letter-spacing: .3px;
+      background: rgba(0,0,0,.42); padding: 4px 10px; border-radius: 20px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      max-width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* 个性化设置弹层 */
+    .pop {
+      position: absolute; top: 46px; right: 10px; z-index: 20; width: 234px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 13px; color: var(--text);
+      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+      display: none; -webkit-app-region: no-drag;
+      animation: pop .25s cubic-bezier(.22,1,.36,1);
+    }
+    .pop.show { display: block; }
+    .pop h4 { font-size: 12.5px; margin-bottom: 9px; color: var(--name); font-weight: 700; }
+    .pop .preview {
+      width: 100%; height: 92px; border-radius: 10px; margin-bottom: 10px;
+      background: var(--surface-2) center/cover no-repeat;
+      border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--muted); overflow: hidden;
+    }
+    .pop .preview img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 9px; }
+    .pop .row { display: flex; gap: 8px; }
+    .pop button {
+      flex: 1; padding: 7px 0; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--btn-ghost); color: var(--text); cursor: pointer; font-size: 12px; transition: background .15s;
+    }
+    .pop button:hover { background: var(--btn-ghost-hover); }
+    .pop button.primary { background: linear-gradient(135deg, #1f6feb, #378ADD); border-color: rgba(255,255,255,.2); color: #fff; }
+    .pop button.danger { color: #ffc9c9; }
+    .pop .tip { font-size: 10.5px; color: var(--muted-2); margin-top: 9px; line-height: 1.5; }
+
+    /* 聊天区（透出玻璃底色） */
+    .chat { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 11px; position: relative; z-index: 1; }
+    .chat::-webkit-scrollbar { width: 5px; }
+    .chat::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 3px; }
+
+    .empty { color: var(--muted-2); text-align: center; padding: 40px 14px; font-size: 13px; line-height: 1.7; margin: auto; }
+
+    .msg {
+      max-width: 88%; padding: 10px 13px; border-radius: 16px;
+      font-size: 13.5px; line-height: 1.6; word-break: break-word;
+      animation: pop .3s cubic-bezier(.22, 1, .36, 1);
+    }
+    @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: none; } }
+    .msg .head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+    .msg .av { width: 19px; height: 19px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; }
+    .msg .nm { font-size: 11px; font-weight: 600; }
+    .msg img { max-width: 180px; max-height: 110px; border-radius: 10px; margin-bottom: 4px; display: block; border: 1px solid var(--border); }
+    .msg-user { align-self: flex-end; background: linear-gradient(135deg, #cfe6ff, #a9d3ff); color: #0a2540; border-bottom-right-radius: 5px; box-shadow: 0 4px 14px rgba(56,139,253,.22); }
+    .msg-user .head { display: none; }
+    .msg-id { align-self: flex-start; background: rgba(248,129,102,.13); border: 1px solid rgba(248,129,102,.38); border-bottom-left-radius: 5px; }
+    .msg-id .av { background: #f78166; } .msg-id .nm { color: #f78166; }
+    .msg-ego { align-self: flex-start; background: rgba(126,231,135,.11); border: 1px solid rgba(126,231,135,.36); border-bottom-left-radius: 5px; }
+    .msg-ego .av { background: #7ee787; } .msg-ego .nm { color: #7ee787; }
+    .msg-superego { align-self: flex-start; background: rgba(210,168,255,.11); border: 1px solid rgba(210,168,255,.36); border-bottom-left-radius: 5px; }
+    .msg-superego .av { background: #d2a8ff; } .msg-superego .nm { color: #d2a8ff; }
+
+    /* 思考中：纯静默占位元素（不渲染任何可见内容） */
+    .thinking { display: none; }
+
+    .input {
+      padding: 9px 12px; background: var(--surface-2);
+      border-top: 1px solid var(--border-weak);
+      display: flex; gap: 8px; align-items: flex-end; flex: 0 0 auto; -webkit-app-region: no-drag; position: relative; z-index: 2;
+    }
+    .input textarea {
+      flex: 1; padding: 9px 12px; background: var(--input-bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 16px; font-size: 13px;
+      outline: none; resize: none; font-family: inherit; line-height: 1.45;
+      min-height: 38px; max-height: 90px; transition: border-color .15s, box-shadow .15s;
+    }
+    .input textarea:focus { border-color: #378ADD; box-shadow: 0 0 0 3px rgba(55,138,221,.18); }
+    .input button {
+      padding: 8px 16px; background: linear-gradient(135deg, #1f6feb, #378ADD); color: #fff;
+      border: 1px solid rgba(255,255,255,.18); border-radius: 16px;
+      cursor: pointer; font-size: 13px; font-weight: 600; flex: 0 0 auto; transition: filter .15s, transform .12s;
+    }
+    .input button:hover { filter: brightness(1.08); }
+    .input button:active { transform: scale(.96); }
+    .input button:disabled { opacity: .5; cursor: not-allowed; filter: none; transform: none; }
+
+    .hint { font-size: 10.5px; color: var(--muted-2); text-align: center; padding: 4px 8px; flex: 0 0 auto; -webkit-app-region: no-drag; position: relative; z-index: 2; }
+    .safety { color: #f85149; font-size: 10.5px; text-align: center; padding: 3px; flex: 0 0 auto; }
+    .sources { font-size: 10.5px; color: var(--muted); margin: 6px 2px 2px; padding: 6px 8px; background: var(--link-bg); border: 1px solid var(--link-border); border-radius: 8px; flex: 0 0 auto; -webkit-app-region: no-drag; }
+    .sources summary { cursor: pointer; color: #58a6ff; user-select: none; }
+    .sources a { color: #58a6ff; text-decoration: none; display: block; padding: 2px 0; word-break: break-all; }
+    .sources a:hover { text-decoration: underline; }
+
+    /* 字数计数：超过上限变红并禁用发送 */
+    .counter { font-size: 10px; color: var(--muted-2); flex: 0 0 auto; -webkit-app-region: no-drag; font-variant-numeric: tabular-nums; padding: 0 12px 4px; text-align: right; position: relative; z-index: 2; }
+    .counter.warn { color: #f85149; font-weight: 600; }
+
+    /* 粘贴截图预览：可移除的小缩略图 */
+    .img-prev { flex: 0 0 auto; padding: 6px 12px 0; -webkit-app-region: no-drag; display: none; position: relative; z-index: 2; }
+    .img-prev.show { display: block; }
+    .img-prev .chip {
+      display: inline-flex; align-items: center; gap: 7px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 12px; padding: 4px 6px 4px 4px; max-width: 100%;
+    }
+    .img-prev img { height: 34px; width: 34px; object-fit: cover; border-radius: 8px; display: block; }
+    .img-prev .nm { font-size: 11px; color: var(--name); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .img-prev .x {
+      width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(248,81,73,.85); color: #fff;
+      cursor: pointer; font-size: 11px; line-height: 1; flex: 0 0 auto;
+    }
+    .img-prev .x:hover { background: rgb(248,81,73); }
+
+    /* 启动自检横幅：连接后端时显示，避免「启动竞态」下的静默连接失败 */
+    .banner { display: none; align-items: center; gap: 8px; flex: 0 0 auto; padding: 9px 12px; font-size: 12px; line-height: 1.5; -webkit-app-region: no-drag; position: relative; z-index: 2; }
+    .banner code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; }
+    .banner.checking { color: var(--name); background: rgba(56,139,253,.16); }
+    .banner.err { color: #ffc9c9; background: rgba(248,81,73,.18); border-top: 1px solid rgba(248,81,73,.4); }
+    .banner.ok { color: #7ee787; background: rgba(63,185,80,.12); }
+    .spin { width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.3); border-top-color: var(--name); border-radius: 50%; animation: spin .8s linear infinite; flex: 0 0 auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 自我（老大）最终结论：突出显示 */
+    .msg-ego.boss { background: rgba(126,231,135,.18); border: 1px solid rgba(126,231,135,.55); box-shadow: 0 0 0 1px rgba(126,231,135,.18), 0 6px 18px rgba(126,231,135,.12); }
+    .msg-ego.boss .nm::after { content: " · 老大拍板"; color: #7ee787; font-size: 10px; opacity: .85; font-weight: 400; }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="bar">
+      <div class="logo">◈</div>
+      <div class="name">Triune</div>
+      <div class="spacer"></div>
+      <button class="mini" onclick="togglePop()" title="个性化">🎨</button>
+      <button class="mini" onclick="window.electronAPI?.openKnowledge()" title="三我知识库">📚</button>
+      <button class="mini" onclick="window.electronAPI ? window.electronAPI.openChatlog() : window.open('/chatlog.html','_blank')" title="聊天日志">🗒</button>
+      <button class="mini" onclick="window.electronAPI?.minimize()" title="隐藏">—</button>
+      <button class="mini close" onclick="window.electronAPI?.close()" title="关闭">×</button>
+    </div>
+    <div class="banner" id="banner"></div>
+
+    <!-- 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 -->
+    <div class="stage" id="stage">
+      <img id="stageImg" alt="" />
+      <div class="stage-status" id="petStatus">在陪着你</div>
+    </div>
+
+    <!-- 个性化设置弹层 -->
+    <div class="pop" id="pop">
+      <h4>个性化 · 顶部图片</h4>
+      <div class="preview" id="popPreview">未设置图片</div>
+      <div class="row">
+        <button class="primary" onclick="document.getElementById('fileInput').click()">选择图片</button>
+        <button class="danger" onclick="clearStage()">移除</button>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" onchange="onStageFile(event)" />
+      <div class="tip">设置的图片会显示在顶部舞台；不设置则不显示舞台。图片仅保存在本机浏览器。</div>
+      <div class="theme-row">
+        <span class="theme-label">主题</span>
+        <button class="topt" data-theme-opt="light" onclick="TriuneTheme.set('light')">浅色</button>
+        <button class="topt" data-theme-opt="dark" onclick="TriuneTheme.set('dark')">深色</button>
+        <button class="topt" data-theme-opt="system" onclick="TriuneTheme.set('system')">跟随</button>
+      </div>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="empty">在这里说说你的事<br>或截图后 Ctrl+V 粘贴</div>
+    </div>
+    <div class="hint">截图 Ctrl+V 粘贴 · Ctrl+Shift+J 显隐</div>
+    <div class="img-prev" id="imgPrev">
+      <div class="chip">
+        <img id="imgPrevImg" alt="截图" />
+        <span class="nm">截图已就绪</span>
+        <button class="x" id="imgPrevX" title="移除截图">×</button>
+      </div>
+    </div>
+    <div class="input">
+      <textarea id="input" rows="1" placeholder="说说你的事..." onkeydown="handleKey(event)" oninput="onInput()" disabled></textarea>
+      <button id="btn" onclick="send()" disabled>发送</button>
+    </div>
+    <div class="counter" id="counter">0 / 5000</div>
+  </div>
+<script>
+let sending = false;
+let pendingImage = null;
+let backendReady = false;   // 启动自检通过后才放行输入
+let healthTimer = null;
+let idleTimer = null;
+
+// 状态机：仅更新状态浮条文案（顶部舞台有图时才可见）
+function setMood(mood, status) {
+  const st = document.getElementById("petStatus");
+  if (status != null && st) st.textContent = status;
+  if (mood === "idle") {
+    clearTimeout(idleTimer);
+  } else {
+    // 非 idle 状态在安静 6s 后自动回到 idle
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => setMood("idle", "在陪着你"), 6000);
+  }
+}
+
+// 图片粘贴
+document.addEventListener("paste", async (e) => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingImage = reader.result;
+        showImgPreview();
+        document.getElementById("input").focus();
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+  }
+});
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+}
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 90) + "px";
+}
+
+// 字数计数（与后端 5000 字上限对齐）
+const MAX = 5000;
+function onInput() {
+  const el = document.getElementById("input");
+  autoResize(el);
+  updateCounter();
+  if (el.value.trim()) setMood("listening", "在听你说话…");
+}
+function updateCounter() {
+  const el = document.getElementById("input");
+  const c = document.getElementById("counter");
+  const n = el.value.length;
+  c.textContent = n + " / " + MAX;
+  const over = n > MAX;
+  c.classList.toggle("warn", over);
+  document.getElementById("btn").disabled = !backendReady || over || sending;
+}
+function escBr(s) { return esc(s).replace(/\n/g, "<br>"); }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// 截图预览缩略图
+function showImgPreview() {
+  if (!pendingImage) return;
+  document.getElementById("imgPrevImg").src = pendingImage;
+  document.getElementById("imgPrev").classList.add("show");
+}
+function clearImgPreview() {
+  pendingImage = null;
+  document.getElementById("imgPrev").classList.remove("show");
+  document.getElementById("imgPrevImg").src = "";
+}
+document.getElementById("imgPrevX").addEventListener("click", () => {
+  clearImgPreview();
+  const input = document.getElementById("input");
+  input.placeholder = "说说你的事...";
+  input.focus();
+});
+
+async function send() {
+  const input = document.getElementById("input");
+  const btn = document.getElementById("btn");
+  const chat = document.getElementById("chat");
+  const text = input.value.trim();
+  if (!backendReady || (!text && !pendingImage) || sending) return;
+  if (input.value.length > MAX) {
+    chat.insertAdjacentHTML("beforeend", sysBubble("内容超过 5000 字上限，请精简后再发。"));
+    scrollBottom(chat);
+    return;
+  }
+
+  sending = true; btn.disabled = true;
+  input.value = ""; input.style.height = "auto";
+  const img = pendingImage; clearImgPreview();
+  input.placeholder = "说说你的事...";
+  updateCounter();
+  setMood("thinking", "本我 和 超我 在争论…");
+
+  const empty = chat.querySelector(".empty");
+  if (empty) empty.remove();
+
+  // 用户消息
+  let ub = `<div class="msg msg-user">`;
+  if (img) ub += `<img src="${img}" alt="截图" />`;
+  if (text) ub += `<div>${esc(text)}</div>`;
+  ub += `</div>`;
+  chat.insertAdjacentHTML("beforeend", ub);
+
+  // 单一「在听」指示 —— 不再分别显示三我的思考过程
+  const tk = showThinking(chat);
+  scrollBottom(chat);
+
+  try {
+    const body = { content: text || "[用户分享了一张截图]" };
+    if (img) body.imageBase64 = img;
+    const r = await fetch("/api/journal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await r.json();
+
+    if (data.success) {
+      tk.remove();
+      // 1) 本我 ↔ 超我 争吵（逐条缓出为各自独立的消息框，无额外标题）
+      const debate = data.data.debate || [];
+      if (debate.length) {
+        setMood("thinking", "本我 和 超我 在争论…");
+        for (const turn of debate) {
+          await delay(550);
+          appendDebateTurn(chat, turn);
+          scrollBottom(chat);
+        }
+      }
+      // 2) 自我（老大）综合拍板，给出最终最中肯/现实/贴用户的答案
+      if (data.data.ego && data.data.ego.text) {
+        await delay(350);
+        setMood("speaking", "自我在回应你");
+        appendVoice(chat, "自我", data.data.ego.text, "msg-ego boss", "自");
+        scrollBottom(chat);
+      }
+      if (data.data.imageNote) {
+        chat.insertAdjacentHTML("beforeend", `<div class="hint">📷 ${esc(data.data.imageNote)}</div>`);
+      }
+      if (data.data.safety?.anyCensored) {
+        chat.insertAdjacentHTML("beforeend", `<div class="safety">⚠ 部分内容因安全策略被调整</div>`);
+      }
+      // 联网检索来源：透明可溯，便于用户核对真实性
+      if (Array.isArray(data.data.sources) && data.data.sources.length) {
+        const links = data.data.sources
+          .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`)
+          .join("<br>");
+        chat.insertAdjacentHTML(
+          "beforeend",
+          `<details class="sources"><summary>🔍 参考来源（${data.data.sources.length}）</summary>${links}</details>`,
+        );
+      }
+      // 回复结束，伙伴恢复待机
+      setMood("idle", "在陪着你");
+    } else {
+      tk.remove();
+      chat.insertAdjacentHTML("beforeend", sysBubble(data.error || "出错了"));
+      setMood("idle", "在陪着你");
+    }
+  } catch (e) {
+    tk.remove();
+    chat.insertAdjacentHTML("beforeend", sysBubble("连接失败——服务是否已启动？"));
+    setMood("idle", "在陪着你");
+  }
+
+  scrollBottom(chat);
+  sending = false; updateCounter(); input.focus();
+}
+
+function showThinking(chat) {
+  const el = document.createElement("div");
+  el.className = "thinking";
+  el.innerHTML = "";
+  chat.appendChild(el);
+  return el;
+}
+function appendVoice(chat, name, text, cls, letter) {
+  const el = document.createElement("div");
+  el.className = "msg " + cls;
+  el.innerHTML = `<div class="head"><span class="av">${letter}</span><span class="nm">${name}</span></div>${escBr(text)}`;
+  chat.appendChild(el);
+}
+function appendDebateTurn(chat, turn) {
+  const isId = turn.speaker === "id";
+  const el = document.createElement("div");
+  el.className = "msg " + (isId ? "msg-id" : "msg-superego");
+  el.innerHTML = `<div class="head"><span class="av">${isId ? "本" : "超"}</span><span class="nm">${isId ? "本我" : "超我"}</span></div>${escBr(turn.text)}`;
+  chat.appendChild(el);
+}
+function sysBubble(msg) {
+  return `<div class="msg msg-ego"><div class="head"><span class="av" style="background:#7ee787"></span><span class="nm" style="color:#7ee787">系统</span></div>${esc(msg)}</div>`;
+}
+
+function scrollBottom(el) { el.scrollTop = el.scrollHeight; }
+function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+// 窗口控制（Electron）
+window.electronAPI = window.electronAPI || {
+  minimize() { /* overridden by preload */ },
+  close() { window.close(); }
+};
+
+// ====== 个性化：顶部舞台图片（仅存本机 localStorage） ======
+const STAGE_KEY = "tj_stage_image";
+function renderStage() {
+  const stage = document.getElementById("stage");
+  const img = document.getElementById("stageImg");
+  const pv = document.getElementById("popPreview");
+  const data = localStorage.getItem(STAGE_KEY);
+  if (data) {
+    stage.classList.add("has-image");
+    img.src = data;
+    pv.innerHTML = `<img src="${data}" alt="" />`;
+  } else {
+    stage.classList.remove("has-image");
+    img.removeAttribute("src");
+    pv.textContent = "未设置图片";
+  }
+}
+function togglePop() {
+  document.getElementById("pop").classList.toggle("show");
+}
+function onStageFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const src = reader.result;
+    const im = new Image();
+    im.onload = () => {
+      const maxW = 480;
+      const scale = Math.min(1, maxW / im.width);
+      const w = Math.max(1, Math.round(im.width * scale));
+      const h = Math.max(1, Math.round(im.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(im, 0, 0, w, h);
+      let out = src;
+      try { out = canvas.toDataURL("image/jpeg", 0.82); } catch (_) {}
+      localStorage.setItem(STAGE_KEY, out);
+      renderStage();
+    };
+    im.src = src;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+}
+function clearStage() {
+  localStorage.removeItem(STAGE_KEY);
+  renderStage();
+}
+// 点击弹层外部关闭
+document.addEventListener("click", (e) => {
+  const pop = document.getElementById("pop");
+  if (!pop.classList.contains("show")) return;
+  if (pop.contains(e.target)) return;
+  if (e.target.closest && e.target.closest('[onclick="togglePop()"]')) return;
+  pop.classList.remove("show");
+});
+
+/* ---- 启动自检：开窗先连 /api/health，连不上就提示并保持禁用、每 4s 自动重试 ---- */
+function setReady(ok) {
+  backendReady = ok;
+  document.getElementById("input").disabled = !ok;
+  updateCounter();
+}
+async function checkHealth() {
+  const banner = document.getElementById("banner");
+  banner.className = "banner checking";
+  banner.innerHTML = `<span class="spin"></span> 正在连接后端…`;
+  try {
+    const r = await fetch("/api/health", { cache: "no-store" });
+    const data = await r.json().catch(() => null);
+    if (r.ok && data && data.status === "ok") {
+      setReady(true);
+      banner.className = "banner ok";
+      banner.innerHTML = `✓ 已连接 · 模型 ${esc(data.model || "")}`;
+      setTimeout(() => { if (backendReady) banner.style.display = "none"; }, 2500);
+      return;
+    }
+    throw new Error("bad status");
+  } catch (e) {
+    setReady(false);
+    banner.className = "banner err";
+    banner.innerHTML = `⚠ 后端未启动，请先在项目目录运行 <code>npm run dev</code>（窗口关了点右下角托盘图标、或按 Ctrl+Shift+J 找回）`;
+    healthTimer = setTimeout(checkHealth, 4000); // 自动重试，后端起好即恢复
+  }
+}
+renderStage();
+checkHealth();
+</script>
+<script src="/theme.js"></script>
+<script src="/onboarding.js"></script>
+</body>
+</html>

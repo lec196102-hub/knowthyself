@@ -1,0 +1,298 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Triune Journal · 陪伴</title>
+  <script>
+    (function(){try{var m=localStorage.getItem('tj_theme')||'system';var t=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.dataset.theme=t;}catch(e){}})();
+  </script>
+  <link rel="stylesheet" href="/theme.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      height: 100vh; display: flex; flex-direction: column;
+      font-family: system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+      background: var(--body-bg);
+      color: var(--text);
+    }
+
+    .header {
+      padding: 14px 20px; flex-shrink: 0;
+      background: var(--header-bg);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-weak);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, #378ADD, #7F77DD); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; box-shadow: 0 4px 14px rgba(55, 138, 221, 0.4);
+      animation: brandGlow 4s ease-in-out infinite;
+    }
+    @keyframes brandGlow { 0%,100% { box-shadow: 0 4px 14px rgba(55,138,221,.4); } 50% { box-shadow: 0 4px 22px rgba(127,119,221,.6); } }
+    .header .title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .header .sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .members { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+    .navbtn {
+      font-size: 12px; color: var(--name); text-decoration: none; padding: 5px 10px;
+      border: 1px solid var(--nav-border); border-radius: 8px; transition: .15s;
+      background: var(--surface-2); white-space: nowrap;
+    }
+    .navbtn:hover { border-color: #58a6ff; color: #58a6ff; }
+    .members .chip {
+      display: flex; align-items: center; gap: 5px; font-size: 12px;
+      padding: 4px 10px; border-radius: 20px; background: var(--surface-2);
+    }
+    .members .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .m-id .dot { background: #f78166; } .m-id { color: #f78166; }
+    .m-ego .dot { background: #7ee787; } .m-ego { color: #7ee787; }
+    .m-sp .dot { background: #d2a8ff; } .m-sp { color: #d2a8ff; }
+
+    .chat { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+    .chat::-webkit-scrollbar { width: 7px; }
+    .chat::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 4px; }
+
+    .msg {
+      max-width: 82%; padding: 11px 15px; border-radius: 14px;
+      font-size: 14px; line-height: 1.6; word-break: break-word; animation: fadeIn .3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .msg .head { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+    .msg .av { width: 20px; height: 20px; border-radius: 50%; font-size: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; }
+    .msg .nm { font-size: 11.5px; font-weight: 600; }
+    .msg-user { align-self: flex-end; background: #1f6feb; color: #fff; border-bottom-right-radius: 5px; }
+    .msg-user .head { display: none; }
+    .msg-id { align-self: flex-start; background: rgba(248, 129, 102, 0.10); border: 1px solid rgba(248, 129, 102, 0.30); border-bottom-left-radius: 5px; }
+    .msg-id .av { background: #f78166; } .msg-id .nm { color: #f78166; }
+    .msg-ego { align-self: flex-start; background: rgba(126, 231, 135, 0.09); border: 1px solid rgba(126, 231, 135, 0.28); border-bottom-left-radius: 5px; }
+    .msg-ego .av { background: #7ee787; } .msg-ego .nm { color: #7ee787; }
+    .msg-superego { align-self: flex-start; background: rgba(210, 168, 255, 0.09); border: 1px solid rgba(210, 168, 255, 0.28); border-bottom-left-radius: 5px; }
+    .msg-superego .av { background: #d2a8ff; } .msg-superego .nm { color: #d2a8ff; }
+
+    /* 单一「在听」指示，取代三条思考过程 */
+    .thinking {
+      align-self: flex-start; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 5px;
+      padding: 11px 15px; display: flex; align-items: center; gap: 10px;
+      font-size: 12.5px; color: var(--muted);
+    }
+    .thinking .dots { display: flex; gap: 4px; }
+    .thinking .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
+    .thinking .dots i:nth-child(2) { animation-delay: .2s; }
+    .thinking .dots i:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
+
+    .empty { color: var(--muted-2); text-align: center; padding: 70px 20px; font-size: 14px; line-height: 1.8; margin: auto; }
+    .empty .orb {
+      width: 54px; height: 48px; margin: 0 auto 18px; border-radius: 52% 52% 46% 46% / 60% 60% 42% 42%;
+      background: linear-gradient(160deg, #378ADD, #7F77DD);
+      box-shadow: 0 8px 22px rgba(0,0,0,.35), inset 0 2px 6px rgba(255,255,255,.3);
+      animation: breathe 4.6s ease-in-out infinite; position: relative;
+    }
+    .empty .orb::before, .empty .orb::after {
+      content: ""; position: absolute; top: 18px; width: 7px; height: 9px; border-radius: 50%;
+      background: #11161d; box-shadow: inset 0 1px 1px rgba(255,255,255,.5);
+    }
+    .empty .orb::before { left: 14px; } .empty .orb::after { right: 14px; }
+    @keyframes breathe { 0%,100% { transform: scale(1) translateY(0); } 50% { transform: scale(1.05) translateY(-2px); } }
+
+    .input-area {
+      padding: 14px 20px; flex-shrink: 0; display: flex; gap: 12px; align-items: flex-end;
+      background: var(--header-bg);
+      -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border-weak);
+    }
+    .input-area input, .input-area textarea {
+      flex: 1; padding: 12px 16px; background: var(--input-bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 22px; font-size: 14px;
+      outline: none; font-family: inherit;
+    }
+    .input-area textarea { resize: none; min-height: 46px; max-height: 140px; line-height: 1.5; }
+    .counter { text-align: right; padding: 0 22px 10px; font-size: 11px; color: var(--muted-2); font-variant-numeric: tabular-nums; }
+    .counter.warn { color: #f85149; font-weight: 600; }
+    .input-area input:focus, .input-area textarea:focus { border-color: #378ADD; }
+    .input-area button {
+      padding: 11px 22px; background: linear-gradient(135deg, #378ADD, #7F77DD); color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 22px;
+      cursor: pointer; font-size: 14px; font-weight: 600; white-space: nowrap; transition: filter .15s, transform .12s;
+    }
+    .input-area button:hover { filter: brightness(1.08); }
+    .input-area button:active { transform: scale(.97); }
+    .input-area button:disabled { opacity: .5; cursor: not-allowed; filter: none; transform: none; }
+
+    .safety-warn { color: #f85149; font-size: 11px; text-align: center; padding: 5px; }
+    .sources { font-size: 12px; color: var(--muted); margin: 8px 0; padding: 8px 12px; background: var(--link-bg); border: 1px solid var(--link-border); border-radius: 8px; }
+    .sources summary { cursor: pointer; color: #58a6ff; user-select: none; }
+    .sources a { color: #58a6ff; text-decoration: none; display: block; padding: 3px 0; word-break: break-all; }
+    .sources a:hover { text-decoration: underline; }
+
+    /* 自我（老大）最终结论：突出显示 */
+    .msg-ego.boss { background: rgba(126,231,135,.16); border: 1px solid rgba(126,231,135,.5); box-shadow: 0 0 0 1px rgba(126,231,135,.15); }
+    .msg-ego.boss .nm::after { content: " · 老大拍板"; color: #7ee787; font-size: 10px; opacity: .85; font-weight: 400; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">◈</div>
+    <div>
+      <div class="title">Triune Journal</div>
+      <div class="sub">本我 · 自我 · 超我，三位一体的陪伴</div>
+    </div>
+    <div class="members">
+      <span class="chip m-id"><span class="dot"></span>本我</span>
+      <span class="chip m-ego"><span class="dot"></span>自我</span>
+      <span class="chip m-sp"><span class="dot"></span>超我</span>
+      <a class="navbtn" href="/knowledge.html" target="_blank" title="三我知识库">📚 知识库</a>
+      <a class="navbtn" href="/chatlog.html" target="_blank" title="聊天日志：搜索 / 删除聊天记录">🗒 聊天日志</a>
+      <div class="theme-seg">
+        <button class="topt" data-theme-opt="light" onclick="TriuneTheme.set('light')" title="浅色">浅</button>
+        <button class="topt" data-theme-opt="dark" onclick="TriuneTheme.set('dark')" title="深色">深</button>
+        <button class="topt" data-theme-opt="system" onclick="TriuneTheme.set('system')" title="跟随系统">随</button>
+      </div>
+    </div>
+  </div>
+  <div class="chat" id="chat">
+    <div class="empty"><div class="orb"></div>把今天的事说给三位听——<br>本我和超我会先吵一架，最后由自我拍板</div>
+  </div>
+  <div class="input-area">
+    <textarea id="input" rows="1" placeholder="说说你的事..." onkeydown="handleKey(event)" oninput="onInput()"></textarea>
+    <button id="btn" onclick="send()">发送</button>
+  </div>
+  <div class="counter" id="counter">0 / 5000</div>
+<script>
+let sending = false;
+const MAX = 5000;
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+}
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 140) + "px";
+}
+function onInput() {
+  const el = document.getElementById("input");
+  autoResize(el);
+  updateCounter();
+}
+function updateCounter() {
+  const el = document.getElementById("input");
+  const c = document.getElementById("counter");
+  const n = el.value.length;
+  c.textContent = n + " / " + MAX;
+  c.classList.toggle("warn", n > MAX);
+  document.getElementById("btn").disabled = sending || n > MAX;
+}
+function escBr(s) { return esc(s).replace(/\n/g, "<br>"); }
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function send() {
+  const input = document.getElementById("input");
+  const btn = document.getElementById("btn");
+  const chat = document.getElementById("chat");
+  const text = input.value.trim();
+  if (!text || sending) return;
+  if (input.value.length > MAX) {
+    chat.insertAdjacentHTML("beforeend", sysBubble("内容超过 5000 字上限，请精简后再发。"));
+    scrollBottom(chat);
+    return;
+  }
+
+  sending = true;
+  btn.disabled = true;
+  input.value = "";
+  autoResize(input);
+  updateCounter();
+
+  const empty = chat.querySelector(".empty");
+  if (empty) empty.remove();
+
+  chat.insertAdjacentHTML("beforeend", `<div class="msg msg-user">${esc(text)}</div>`);
+  const tk = showThinking(chat);
+  scrollBottom(chat);
+
+  try {
+    const r = await fetch("/api/journal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: text })
+    });
+    const data = await r.json();
+
+    if (data.success) {
+      tk.remove();
+      // 1) 本我 ↔ 超我 争吵（自我综合前的"思考时间"，逐条缓出）
+      const debate = data.data.debate || [];
+      if (debate.length) {
+        for (const turn of debate) {
+          await delay(550);
+          appendDebateTurn(chat, turn);
+          scrollBottom(chat);
+        }
+      }
+      // 2) 自我（老大）综合拍板，给出最终最中肯/现实/贴用户的答案
+      if (data.data.ego && data.data.ego.text) {
+        await delay(350);
+        appendVoice(chat, "自我", data.data.ego.text, "msg-ego boss", "自");
+        scrollBottom(chat);
+      }
+      if (data.data.safety && data.data.safety.anyCensored) {
+        chat.insertAdjacentHTML("beforeend", `<div class="safety-warn">⚠ 部分内容因安全策略被调整</div>`);
+      }
+      // 联网检索来源：透明可溯，便于用户核对真实性
+      if (Array.isArray(data.data.sources) && data.data.sources.length) {
+        const links = data.data.sources
+          .map((s) => `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title)}</a>`)
+          .join("<br>");
+        chat.insertAdjacentHTML(
+          "beforeend",
+          `<details class="sources"><summary>🔍 参考来源（${data.data.sources.length}）</summary>${links}</details>`,
+        );
+      }
+    } else {
+      tk.remove();
+      chat.insertAdjacentHTML("beforeend", sysBubble(data.error || "出错了"));
+    }
+  } catch (e) {
+    tk.remove();
+    chat.insertAdjacentHTML("beforeend", sysBubble("连接失败——服务是否已启动？"));
+  }
+
+  scrollBottom(chat);
+  sending = false;
+  updateCounter();
+  input.focus();
+}
+
+function showThinking(chat) {
+  const el = document.createElement("div");
+  el.className = "thinking";
+  el.innerHTML = `<span>正在生成回复…</span><span class="dots"><i></i><i></i><i></i></span>`;
+  chat.appendChild(el);
+  return el;
+}
+function appendVoice(chat, name, text, cls, letter) {
+  const el = document.createElement("div");
+  el.className = "msg " + cls;
+  el.innerHTML = `<div class="head"><span class="av">${letter}</span><span class="nm">${name}</span></div>${escBr(text)}`;
+  chat.appendChild(el);
+}
+function appendDebateTurn(chat, turn) {
+  const isId = turn.speaker === "id";
+  const el = document.createElement("div");
+  el.className = "msg " + (isId ? "msg-id" : "msg-superego");
+  el.innerHTML = `<div class="head"><span class="av">${isId ? "本" : "超"}</span><span class="nm">${isId ? "本我" : "超我"}</span></div>${escBr(turn.text)}`;
+  chat.appendChild(el);
+}
+function sysBubble(msg) {
+  return `<div class="msg msg-ego"><div class="head"><span class="av" style="background:#7ee787"></span><span class="nm" style="color:#7ee787">系统</span></div>${esc(msg)}</div>`;
+}
+function scrollBottom(el) { el.scrollTop = el.scrollHeight; }
+function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+</script>
+<script src="/theme.js"></script>
+<script src="/onboarding.js"></script>
+</body>
+</html>

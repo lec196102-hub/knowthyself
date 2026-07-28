@@ -1,0 +1,73 @@
+{
+  "name": "triune-journal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "electron/main.cjs",
+  "description": "Triune Journal · 三我（本我/自我/超我）AI 情绪陪伴桌宠",
+  "scripts": {
+    "dev": "tsx src/api/server.ts",
+    "build": "tsc",
+    "start": "node dist/api/server.js",
+    "setup": "tsx src/llm/setup.ts",
+    "test": "tsx tests/test-dry.ts && node --import tsx/esm --test tests/unit/*.test.ts",
+    "test:dry": "tsx tests/test-dry.ts",
+    "test:unit": "node --import tsx/esm --test tests/unit/*.test.ts",
+    "test:temperament": "tsx tests/test-temperament.ts",
+    "widget": "electron electron/main.cjs",
+    "widget:dev": "node --import tsx/esm src/api/server.ts & electron electron/main.cjs",
+    "harvest-comments": "tsx scripts/harvest-comments.ts",
+    "build:backend": "esbuild src/api/server.ts --bundle --platform=node --format=esm --target=node20 --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=dist/api/server.bundle.mjs",
+    "pack": "npm run build && npm run build:backend && electron-builder --dir",
+    "dist": "npm run build && npm run build:backend && electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.1.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "openai": "^6.49.0",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "electron": "^43.2.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.28.1"
+  },
+  "build": {
+    "appId": "com.triune.journal",
+    "productName": "Triune 陪伴",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/**/*",
+      "public/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist",
+        "to": "dist"
+      }
+    ],
+    "asarUnpack": [
+      "dist/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "electron/assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

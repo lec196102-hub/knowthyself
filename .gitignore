@@ -1,0 +1,8 @@
+﻿node_modules/
+dist/
+.env
+data/
+*.log
+outputs/
+fix_server.py
+

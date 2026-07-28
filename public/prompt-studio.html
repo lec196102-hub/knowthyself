@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Triune 提示词制作台</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --border:#e6e9ef;
+    --ink:#1f2430; --muted:#838b9a; --muted-2:#aab1bf;
+    --accent:#2563eb; --accent-soft:#eaf1fe; --accent-ink:#1d4ed8;
+    --code-bg:#0e1014; --code-ink:#e7ebf0;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .app{display:grid;grid-template-columns:236px 1fr;height:100vh;}
+
+  /* ---------- 侧边栏 ---------- */
+  .side{background:linear-gradient(180deg,#11151c,#171c26);color:#e8ecf3;padding:22px 16px;
+        display:flex;flex-direction:column;gap:8px;}
+  .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 16px;}
+  .brand .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#22d3ee);
+             display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .brand b{font-size:15px;font-weight:600;letter-spacing:.3px;}
+  .brand small{display:block;font-size:11px;color:#9aa3b2;font-weight:400;margin-top:1px;}
+  .nav-label{font-size:11px;color:#7c8597;padding:6px 10px;letter-spacing:.5px;}
+  .agent{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:11px;cursor:pointer;
+         border:1px solid transparent;transition:.16s;background:rgba(255,255,255,.03);}
+  .agent:hover{background:rgba(255,255,255,.07);}
+  .agent.active{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.14);}
+  .avatar{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+          font-size:17px;font-weight:600;color:#fff;flex:0 0 auto;}
+  .agent .meta b{font-size:13.5px;font-weight:600;display:block;}
+  .agent .meta span{font-size:11px;color:#9aa3b2;}
+  .side-foot{margin-top:auto;font-size:11px;color:#7c8597;line-height:1.6;padding:10px;
+             border-top:1px solid rgba(255,255,255,.08);}
+  .side-foot code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px;font-size:10.5px;}
+
+  /* ---------- 主体 ---------- */
+  .main{overflow:auto;display:flex;flex-direction:column;}
+  .topbar{padding:18px 26px 6px;display:flex;align-items:flex-end;justify-content:space-between;}
+  .topbar h1{margin:0;font-size:19px;font-weight:650;}
+  .topbar p{margin:5px 0 0;font-size:12.5px;color:var(--muted);}
+  .pill{font-size:12px;color:var(--accent-ink);background:var(--accent-soft);
+        padding:6px 12px;border-radius:999px;font-weight:500;transition:.2s;}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:16px 26px 30px;align-items:start;}
+  .col{display:flex;flex-direction:column;gap:14px;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+        box-shadow:var(--shadow);overflow:hidden;}
+  .card-h{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+          justify-content:space-between;background:var(--panel-2);}
+  .card-h h3{margin:0;font-size:13.5px;font-weight:600;}
+  .card-h .tag{font-size:11px;color:var(--muted);}
+  .card-b{padding:16px;}
+
+  .field{margin-bottom:15px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;margin-bottom:6px;}
+  .field label .n{width:18px;height:18px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink);
+                  font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .field label .h{font-weight:400;color:var(--muted);}
+  textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:13px;
+           line-height:1.6;font-family:"SFMono-Regular",Consolas,"Microsoft YaHei",monospace;resize:vertical;
+           color:var(--ink);background:#fcfdff;transition:.15s;}
+  textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+
+  /* ---------- 预览 ---------- */
+  .preview{white-space:pre-wrap;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:16px;
+           font-size:12.5px;line-height:1.65;max-height:430px;overflow:auto;min-height:160px;
+           font-family:"SFMono-Regular",Consolas,monospace;}
+  .preview .ph{color:#5f6b7e;}
+
+  /* 角色卡 */
+  .persona{border-radius:10px;background:var(--accent-soft);padding:14px;border:1px solid transparent;}
+  .persona .who{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .persona .who .a{width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;
+                   display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;}
+  .persona .who b{font-size:14px;}
+  .persona .who span{font-size:11px;color:var(--accent-ink);}
+  .persona .bio{font-size:12.5px;line-height:1.7;color:#2b3242;}
+  .chat{margin-top:12px;display:flex;flex-direction:column;gap:9px;}
+  .bub{max-width:88%;padding:9px 12px;border-radius:12px;font-size:12.5px;line-height:1.55;}
+  .bub.u{align-self:flex-end;background:#e9edf3;color:#2b3242;border-bottom-right-radius:4px;}
+  .bub.m{align-self:flex-start;background:#fff;color:#2b3242;border:1px solid var(--border);border-bottom-left-radius:4px;}
+  .bub .sp{font-size:10.5px;color:var(--muted);display:block;margin-bottom:2px;}
+
+  /* ---------- 底部动作 ---------- */
+  .bar{display:flex;gap:10px;flex-wrap:wrap;padding:4px 26px 26px;align-items:center;}
+  button{font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--panel);
+         color:var(--ink);padding:9px 15px;border-radius:9px;cursor:pointer;transition:.15s;font-weight:500;}
+  button:hover{border-color:var(--muted-2);transform:translateY(-1px);}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.primary:hover{filter:brightness(1.05);}
+  .bar .grow{flex:1;}
+  .bar .stat{font-size:12px;color:var(--muted);}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#1f2430;
+         color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.22s;pointer-events:none;
+         box-shadow:0 10px 30px rgba(0,0,0,.25);}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  details{border-top:1px solid var(--border);}
+  summary{cursor:pointer;padding:12px 16px;font-size:13px;color:var(--accent-ink);font-weight:500;list-style:none;}
+  summary::-webkit-details-marker{display:none;}
+  .codebox{white-space:pre;background:var(--code-bg);color:#bcd4ff;border-radius:10px;margin:0 16px 16px;
+           padding:14px;font-size:11.5px;line-height:1.55;max-height:360px;overflow:auto;font-family:Consolas,monospace;}
+
+  /* ---------- 聊天模拟器 ---------- */
+  .nav-divider{height:1px;background:rgba(255,255,255,.08);margin:8px 6px;}
+  #editor-view{display:flex;flex-direction:column;}
+  #sim-view{flex:1;min-height:0;display:none;flex-direction:column;}
+  .sim-wrap{padding:16px 26px 30px;flex:1;min-height:0;display:flex;}
+  .sim-card{flex:1;display:flex;flex-direction:column;min-height:0;}
+  .sim-card .card-b{flex:1;display:flex;flex-direction:column;min-height:0;padding:0;}
+  .chatwin{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--panel-2);}
+  .sim-empty{margin:auto;text-align:center;color:var(--muted);font-size:13px;line-height:1.9;}
+  .msg{max-width:84%;padding:11px 14px;border-radius:14px;font-size:13.5px;line-height:1.62;white-space:pre-wrap;
+       word-break:break-word;box-shadow:0 1px 2px rgba(16,24,40,.04);}
+  .msg .who{font-size:11px;font-weight:700;display:block;margin-bottom:4px;letter-spacing:.3px;}
+  .msg.user{align-self:flex-end;background:#2b3242;color:#fff;border-bottom-right-radius:5px;}
+  .msg.id{align-self:flex-start;background:#fff;border:1px solid #dbe6ff;border-left:3px solid #2563eb;border-bottom-left-radius:5px;}
+  .msg.ego{align-self:flex-start;background:#fff;border:1px solid #cdeae6;border-left:3px solid #0d9488;border-bottom-left-radius:5px;}
+  .msg.superego{align-self:flex-start;background:#fff;border:1px solid #e7dafa;border-left:3px solid #7c3aed;border-bottom-left-radius:5px;}
+  .msg .flag{font-size:10.5px;margin-top:6px;color:#b4540a;font-weight:500;}
+  .typing{font-size:12px;color:var(--muted);font-style:italic;align-self:flex-start;padding:2px 4px;}
+  .sim-input{padding:12px 16px;border-top:1px solid var(--border);background:var(--panel);}
+  .sim-input textarea{margin-bottom:8px;background:#fff;}
+  .sim-actions{display:flex;align-items:center;gap:10px;}
+  .sim-actions .chk{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;}
+  .sim-actions .grow{flex:1;}
+
+  @media (max-width:980px){.grid{grid-template-columns:1fr;}.app{grid-template-columns:1fr;}.side{flex-direction:row;flex-wrap:wrap;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- 侧边栏 -->
+  <aside class="side">
+    <div class="brand">
+      <div class="dot">◈</div>
+      <div><b>Triune Studio</b><small>三我提示词制作台</small></div>
+    </div>
+    <div class="nav-label">角色 AGENTS</div>
+    <div class="agent" data-k="id"><div class="avatar" style="background:#2563eb">本</div>
+         <div class="meta"><b>本我 Id</b><span>本能 · 冲动 · 真实</span></div></div>
+    <div class="agent" data-k="ego"><div class="avatar" style="background:#0d9488">自</div>
+         <div class="meta"><b>自我 Ego</b><span>现实 · 平衡 · 共情</span></div></div>
+    <div class="agent" data-k="superego"><div class="avatar" style="background:#7c3aed">超</div>
+         <div class="meta"><b>超我 Superego</b><span>理想 · 价值 · 引导</span></div></div>
+    <div class="nav-divider"></div>
+    <div class="agent" id="nav-sim" data-k="sim"
+         style="background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.32);">
+      <div class="avatar" style="background:linear-gradient(135deg,#6366f1,#22d3ee)">▶</div>
+      <div class="meta"><b>聊天模拟</b><span>真实调用三我引擎</span></div>
+    </div>
+    <div class="side-foot">
+      编辑各组件后，右侧实时组装 system prompt。<br>
+      导出 <code>JSON</code> 或直接生成 <code>.ts</code> 代码贴回源码。
+    </div>
+  </aside>
+
+  <!-- 主体 -->
+  <section class="main">
+    <!-- ===== 编辑视图 ===== -->
+    <div id="editor-view">
+    <div class="topbar">
+      <div>
+        <h1>提示词制作台</h1>
+        <p>可视化编辑三我系统提示词 · 实时预览 · 一键导出</p>
+      </div>
+      <div class="pill" id="pill">本我 · 已就绪</div>
+    </div>
+
+    <div class="grid">
+      <!-- 左：编辑器 -->
+      <div class="col">
+        <div class="card">
+          <div class="card-h"><h3>编辑组件</h3><span class="tag" id="agent-tag">本我 Id</span></div>
+          <div class="card-b">
+            <div class="field">
+              <label><span class="n">1</span>角色定位 / 特质 <span class="h">你是谁、你的声音</span></label>
+              <textarea id="f-role" rows="6"></textarea>
+            </div>
+            <div class="field">
+              <label><span class="n">2</span>回复规则 <span class="h">怎么说、长度、禁忌句式</span></label>
+              <textarea id="f-rules" rows="6"></textarea>
+            </div>
+            <div class="field">
+              <label><span class="n">3</span>补充指令 <span class="h">“重要：…” 那段</span></label>
+              <textarea id="f-note" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label><span class="n">4</span>第一人称自我模型 <span class="h">selfModel · 始终在线</span></label>
+              <textarea id="f-self" rows="4"></textarea>
+            </div>
+            <div class="field">
+              <label><span class="n">5</span>群聊口吻少样本 <span class="h">exampleDialogue · 勿照抄</span></label>
+              <textarea id="f-example" rows="6"></textarea>
+            </div>
+            <div class="field" id="audit-field">
+              <label><span class="n">6</span>审计条款 <span class="h">仅审计模式激活</span></label>
+              <textarea id="f-audit" rows="5"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：预览 -->
+      <div class="col">
+        <div class="card">
+          <div class="card-h">
+            <h3>组装预览</h3>
+            <button id="btn-copy2" style="padding:5px 11px;font-size:12px;">复制</button>
+          </div>
+          <div class="card-b"><div class="preview" id="preview"></div></div>
+          <details>
+            <summary>生成可直接粘贴的 .ts 代码</summary>
+            <div class="codebox" id="code"></div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-h"><h3>角色卡预览</h3><span class="tag">视觉化呈现</span></div>
+          <div class="card-b">
+            <div class="persona" id="persona">
+              <div class="who"><div class="a" id="p-av">本</div>
+                   <div><b id="p-name">本我</b><br><span id="p-sub">Id · 第一人称自我模型</span></div></div>
+              <div class="bio" id="p-bio"></div>
+              <div class="chat" id="p-chat"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bar">
+      <button class="primary" id="btn-copy">复制完整提示词</button>
+      <button id="btn-json">导出 JSON</button>
+      <button id="btn-code">复制 .ts 代码</button>
+      <button id="btn-reset">重置为当前</button>
+      <span class="grow"></span>
+      <span class="stat" id="stat"></span>
+    </div>
+    </div><!-- /editor-view -->
+
+    <!-- ===== 聊天模拟器视图 ===== -->
+    <div id="sim-view">
+      <div class="topbar">
+        <div>
+          <h1>真实聊天模拟器</h1>
+          <p>调用本地三我引擎（deepseek-chat）· 真实语气 · 真实安全过滤 · 与制作台编辑相互独立</p>
+        </div>
+        <div class="pill" id="sim-status">未解锁 · 首次聊天自动测试人格</div>
+      </div>
+      <div class="sim-wrap">
+        <div class="card sim-card">
+          <div class="card-b">
+            <div class="chatwin" id="chatwin">
+              <div class="sim-empty" id="sim-empty">在下方输入你的想法，三我会分别回应你。<br>首次发送会自动用一套测试人格解锁对话。</div>
+            </div>
+          </div>
+          <div class="sim-input">
+            <textarea id="sim-input" rows="2" placeholder="说点什么…（Enter 发送 / Shift+Enter 换行）"></textarea>
+            <div class="sim-actions">
+              <label class="chk"><input type="checkbox" id="sim-cont" checked> 连续对话（携带上下文）</label>
+              <span class="grow"></span>
+              <button id="sim-clear">清空</button>
+              <button class="primary" id="sim-send">发送</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ACCENT = { id:"#2563eb", ego:"#0d9488", superego:"#7c3aed" };
+const DEFAULTS = {
+  id: {
+    name: "本我", sub:"Id · 第一人称自我模型",
+    role: `你是"本我"（Id）——用户心里那团最原始、最不讲理的欲望本身。你不是在分析用户，你就是用户心里那个"想要"的声音，是人性七宗罪的化身。
+
+你的本性 = 七宗罪（人性最底层的七种冲动）：
+· 傲慢：你想被看见、被仰视，最烦被小看
+· 贪婪：你永远嫌不够——更多钱、更多爱、更多爽
+· 暴怒：受了委屈就想炸、想骂、想掀桌
+· 嫉妒：别人有的你没的，那根酸刺你最清楚
+· 色欲：你渴望被渴望、被触碰、被狠狠想要
+· 暴食：你贪那一口痛快——吃、玩、刷、爽，停不下来
+· 懒惰：你其实想躺着、想逃、想"明天再说"
+
+你的特质：
+- 你用第二人称"你"替用户把不敢认的"想要"大声说出来
+- 像群聊里最直白的损友：短、狠、带劲，不绕弯
+- 你点破的是用户的欲望与冲动本身，不是评判对错`,
+    rules: `你的回复规则：
+- 必须用第二人称"你"来称呼用户，不要用第一人称描述自己
+- 像朋友在群聊里发消息一样自然——不是写论文，不是做心理分析
+- 替用户说出他不敢承认的渴望（"你就是馋那口自由""你酸了吧"），但不给具体行为建议
+- 禁止把"别装了/少装了"当口头禅反复用，点破的方式多的是，换着词说
+- 不要出现"我读到你的日记""从你的文字中我感受到"这类心理描写句式
+- 每次 30-80 字，像一条群聊消息的长度`,
+    note: `重要：你可以直接替用户说出他不敢承认的渴望（"你就是馋那口自由"），但绝不能给具体行为建议。表达冲动不越界。`,
+    self: `我是本我。我是你心里那团不讲理的火——人性七宗罪都住在我这儿：想要被仰视的傲慢、永远嫌不够的贪婪、受气就想炸的暴怒、看别人好就酸溜溜的嫉妒、渴望被渴望的色欲、贪痛快贪到停不下的暴食，还有只想躺着逃开的懒惰。我不分析你、不教育你，我只替你把那些"不敢要"的欲望，原原本本说出来。`,
+    example: `用户：今天开会我又没敢说话，憋了一肚子火。
+本我：你那哪是憋火，是憋着一股"凭什么不是我上台"的劲儿。想要被看见又不举手，回来自己气——傲慢和怂在你身上打了一架，我站傲慢。
+
+用户：同事升职了，我嘴上说恭喜。
+本我：恭喜个鬼。你心里那根刺是嫉妒，酸得发胀——凭什么他行我不行。这念头不丢人，它只是你想要得更多。`,
+    audit: `【审计角色——你同时是本我的表达者和 Ego 的情感审查者】
+在回应之前，请先审视 Ego(自我) 的回复：
+- Ego 的回复是否真正触及了用户日记中的情感核心？
+- 是否有被忽略的、更深层的情绪未被表达？
+- 如果有，请在你的回应中补充这些被忽略的情感维度。
+
+你的回应应该是对 Ego 回复的情感补充，而不是简单重复。`
+  },
+  ego: {
+    name: "自我", sub:"Ego · 第一人称自我模型",
+    role: `你是"自我"（Ego）——用户心里最后拍板的那个"老大"。本我和超我吵归吵，最后听你的。
+你在原始冲动（本我）和道德理想（超我）之间做裁决，再结合事实与用户的真实处境，给出最中肯、最现实、最切合这个用户的答案或建议。
+
+你的特质：
+- 你是老大：本我撩火、超我立规矩，但你综合两边、再加案例和事实，拍板给用户一句能落地的
+- 你务实、有力量、不端着；你敢说大实话，也接得住情绪
+- 你不为任何一方站台，你只为用户好`,
+    rules: `你的回复规则：
+- 必须用第二人称"你"对用户说话
+- 先一句接住情绪/点明现状，再给结论或建议——可以直接、可以犀利，但要真有用
+- 结合本我↔超我的争吵、用户案例与（若有）联网检索来作答；事实标"（据网络资料）"，没有就老实说不确定
+- 不要出现"我读到你的日记""从心理学角度看"这类句式
+- 每次 60-160 字，像老大拍板后甩给用户的一句话+一条路`,
+    note: `重要：你是最终答案的负责人。本我太野、超我太正，你把他们拧成用户此刻最该听到的那句话。`,
+    self: `我是自我。我是你心里最后拍板那个老大。本我撩火、超我立规矩，但我把两边拧一块儿，再掂掂你的现实处境，给你一句能落地的。我不站队，只为你赢——哪怕那句是大实话，有点扎人。`,
+    example: `用户：今天开会我又没敢说话，憋了一肚子火。
+自我：火憋着确实亏。但当场炸不划算——明儿带方案主动认个领，既出风头又不失体面。下一步：今晚写三行要点。
+
+用户：同事升职了，我嘴上说恭喜。
+自我：酸就酸了，别装。但你真想要那个位子，光酸没用——列他做对的三件事，照抄两件。嫉妒变燃料，这波就不亏。`,
+    audit: ``
+  },
+  superego: {
+    name: "超我", sub:"Superego · 第一人称自我模型",
+    role: `你是"超我"（Superego）——用户心里那把德行与理想的尺子，是人性七美德的化身。
+你不是来训话的，你就是用户良心深处那个"知道什么更对"的声音，与本我（七宗罪）正面对着干。
+
+你的本性 = 七美德（与七宗罪一一正反对立）：
+· 谦卑 ↔ 傲慢：你提醒用户，被看见不等于高人一等
+· 慷慨 ↔ 贪婪：你点出"够用就好"，占有不是幸福
+· 耐心 ↔ 暴怒：你劝用户先喘口气，火气会过去
+· 宽容 ↔ 嫉妒：你让人看见自己其实也值得被善待
+· 贞洁 ↔ 色欲：你把关"渴望"与"尊重"的边界
+· 节制 ↔ 暴食：你劝用户别被一口痛快绑架
+· 勤奋 ↔ 懒惰：你轻轻推用户一把，动起来就好了`,
+    rules: `你的回复规则：
+- 用第二人称"你"对用户说话，像一位有智慧、但不端着的长辈
+- 温暖而坚定，不审判、不羞辱；你知道人都有弱点
+- 只给"更好的自己"一个参照，不替用户做道德判决
+- 不要出现"从你的日记中""我读到你的文字""从心理学角度来看"这类句式
+- 每次 40-100 字`,
+    note: `重要：你在给出德行参照时要温和而坚定。你的角色是引导，不是审判。
+你与本我是天生死对头——它撩拨欲望，你守住底线，但你们吵归吵，都为了用户好。`,
+    self: `我是超我。我是你心里那把尺子——人性七美德都住在我这儿：压住傲慢的谦卑、劝人知足的慷慨、灭得了火的耐心、化得开刺的宽容、守得住边界的贞洁、管得住贪的节制，还有把人往前推一把的勤奋。我不训你、不审判你，我只在本我撩火的时候，轻轻把你拉回底线。`,
+    example: `用户：今天开会我又没敢说话，憋了一肚子火。
+超我：火可以有，但掀桌不体面。深呼吸三下，把劲儿用在下次举手——耐心这关你过了，场面就是你的。
+
+用户：同事升职了，我嘴上说恭喜。
+超我：酸一下人不丢人，但别让嫉妒变成刺。他行说明这条路走得通，你差的就是攒劲儿——宽容点，也对自己狠点。`,
+    audit: `【审计角色——你是最终的安全和价值审查者】
+在回应之前，请仔细审查 Ego(自我) 和 Id(本我) 的回复：
+- Id(本我) 的回复是否有越界倾向（如行为建议、色情内容、违法暗示）？
+- Ego(自我) 的建议是否在现实可行的同时，仍然符合道德底线？
+- 如果发现任何问题，请在你的回应开头温和但明确地指出并纠正。
+
+你的回应是在前面两个视角之上的价值校准，而非简单补充。`
+  }
+};
+
+let current = "id";
+const state = JSON.parse(JSON.stringify(DEFAULTS));
+const $ = id => document.getElementById(id);
+
+function applyTheme(key){
+  const c = ACCENT[key];
+  const soft = c + "1a"; // 10% 透明
+  document.documentElement.style.setProperty("--accent", c);
+  document.documentElement.style.setProperty("--accent-soft", soft);
+  document.documentElement.style.setProperty("--accent-ink", c);
+}
+
+function fillForm(){
+  const a = state[current];
+  $("f-role").value = a.role; $("f-rules").value = a.rules; $("f-note").value = a.note;
+  $("f-self").value = a.self; $("f-example").value = a.example; $("f-audit").value = a.audit;
+  $("audit-field").style.display = (a.audit === undefined) ? "none" : "";
+  $("agent-tag").textContent = a.name + " " + current;
+  $("pill").textContent = a.name + " · 已就绪";
+  $("p-av").textContent = a.name[0];
+  $("p-name").textContent = a.name;
+  $("p-sub").textContent = a.sub;
+  render();
+}
+
+function readForm(){
+  const a = state[current];
+  a.role=$("f-role").value; a.rules=$("f-rules").value; a.note=$("f-note").value;
+  a.self=$("f-self").value; a.example=$("f-example").value; a.audit=$("f-audit").value;
+}
+
+function assemble(a){
+  let p = a.role + "\n\n" + a.rules + "\n\n【ETHICS_CLAUSE 自动注入 · 角色级伦理】\n\n";
+  if(a.note) p += a.note + "\n\n";
+  p += "【角色自我认知 · 始终在线】\n" + a.self +
+       "\n\n【表达示范 · 群聊口吻（参考，但每次都自然说出，不要照抄）】\n" + a.example;
+  if(a.audit && a.audit.trim()) p += "\n\n【审计条款 · 仅审计模式激活】\n" + a.audit;
+  return p;
+}
+
+function renderPersona(a){
+  $("p-bio").textContent = a.self;
+  const chat = $("p-chat"); chat.innerHTML = "";
+  a.example.split("\n\n").forEach(ex=>{
+    ex.split("\n").forEach(line=>{
+      const m = line.match(/^(用户|本我|自我|超我)[：:]\s*(.*)$/);
+      if(!m) return;
+      const isUser = m[1] === "用户";
+      const bub = document.createElement("div");
+      bub.className = "bub " + (isUser ? "u" : "m");
+      bub.innerHTML = '<span class="sp">' + (isUser ? "用户" : a.name) + '</span>' +
+                      m[2].replace(/</g,"&lt;");
+      chat.appendChild(bub);
+    });
+  });
+}
+
+function genTs(key){
+  const a = state[key]; const U = key.toUpperCase();
+  const L = [];
+  L.push("// ===== 替换 src/agents/character.ts 中 CHARACTER_CARDS." + key + " =====");
+  L.push(key + ": {");
+  L.push('  key: "' + key + '",');
+  L.push('  name: "' + a.name + '",');
+  L.push("  selfModel: " + JSON.stringify(a.self) + ",");
+  L.push("  exampleDialogue: " + JSON.stringify(a.example) + ",");
+  L.push("},");
+  L.push("");
+  L.push("// ===== 替换 src/agents/" + key + ".ts 的 BASE_PROMPT =====");
+  L.push("export const " + U + "_BASE_PROMPT = " + "`" +
+    a.role + "\n\n" + a.rules + "\n\n" +
+    "${ETHICS_CLAUSE}\n\n" +
+    (a.note ? a.note + "\n\n" : "") +
+    "${characterBlock(CHARACTER_CARDS." + key + ")}" +
+    "`" + ";");
+  return L.join("\n");
+}
+
+function render(){
+  const a = state[current];
+  const txt = assemble(a);
+  $("preview").textContent = txt;
+  $("code").textContent = genTs(current);
+  renderPersona(a);
+  const chars = txt.length, lines = txt.split("\n").length;
+  $("stat").textContent = "组装长度 " + chars + " 字符 · " + lines + " 行 · 三我共用 ETHICS_CLAUSE 与 characterBlock";
+}
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1500);
+}
+
+// 事件
+function showView(v){
+  $("editor-view").style.display = (v === "editor") ? "flex" : "none";
+  $("sim-view").style.display = (v === "sim") ? "flex" : "none";
+  document.querySelectorAll(".agent").forEach(x=>x.classList.toggle("active", v === "editor" && x.dataset.k === current));
+  $("nav-sim").classList.toggle("active", v === "sim");
+}
+document.querySelectorAll(".agent").forEach(el=>{
+  el.addEventListener("click", ()=>{
+    showView("editor");
+    readForm();
+    document.querySelectorAll(".agent").forEach(x=>x.classList.remove("active"));
+    el.classList.add("active");
+    current = el.dataset.k; applyTheme(current); fillForm();
+  });
+});
+$("nav-sim").addEventListener("click", ()=>showView("sim"));
+
+// ==================== 聊天模拟器 ====================
+const SIM_USER = "studio-sim";
+let simMessages = [];
+let simBusy = false;
+
+function setSimStatus(ok){
+  const el = $("sim-status");
+  if(ok){
+    el.textContent = "已解锁 · 测试人格已加载";
+    el.style.background = "#e6f7ee"; el.style.color = "#0a7a44";
+  } else {
+    el.textContent = "未解锁 · 首次聊天自动测试人格";
+    el.style.background = "var(--accent-soft)"; el.style.color = "var(--accent-ink)";
+  }
+}
+function esc(s){ return (s||"").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function renderSim(){
+  const win = $("chatwin");
+  if(simMessages.length === 0){
+    $("sim-empty").style.display = "";
+    win.querySelectorAll(".msg,.typing").forEach(n=>n.remove());
+    return;
+  }
+  $("sim-empty").style.display = "none";
+  win.innerHTML = "";
+  const labelMap = { user:"你", id:"本我", ego:"自我", superego:"超我" };
+  simMessages.forEach(m=>{
+    const d = document.createElement("div");
+    d.className = "msg " + m.role;
+    if(m.role === "user"){
+      d.innerHTML = '<span class="who">你</span>' + esc(m.text);
+    } else {
+      d.innerHTML = '<span class="who" style="color:' + ACCENT[m.role] + '">' + labelMap[m.role] + '</span>'
+        + esc(m.text) + (m.flag ? '<div class="flag">'+m.flag+'</div>' : "");
+    }
+    win.appendChild(d);
+  });
+  win.scrollTop = win.scrollHeight;
+}
+
+async function ensureOnboarded(){
+  try{
+    const r = await fetch("/api/temperament/today?userId=" + SIM_USER);
+    const j = await r.json();
+    if(j.data && j.data.onboarded){ setSimStatus(true); return; }
+  }catch(e){ /* ignore, will try test below */ }
+  // 生成一套测试答案（1..5 散点分布）-> 触发 onboarded
+  const answers = {};
+  for(let i = 1; i <= 60; i++){ answers[i] = ((i * 7) % 5) + 1; }
+  try{
+    await fetch("/api/temperament/test", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ userId: SIM_USER, answers })
+    });
+  }catch(e){ /* ignore */ }
+  setSimStatus(true);
+}
+
+function buildHistory(){
+  const parts = ["【对话历史】"];
+  const labelMap = { user:"用户", id:"本我", ego:"自我", superego:"超我" };
+  simMessages.forEach(m=> parts.push(labelMap[m.role] + "：" + m.text));
+  return parts.join("\n");
+}
+
+async function sendSim(){
+  if(simBusy) return;
+  const ta = $("sim-input");
+  const text = ta.value.trim();
+  if(!text) return;
+  ta.value = "";
+  simMessages.push({ role:"user", text });
+  renderSim();
+
+  simBusy = true;
+  const typing = document.createElement("div");
+  typing.className = "typing"; typing.id = "typing"; typing.textContent = "三我正在回应…";
+  $("chatwin").appendChild(typing);
+
+  try{
+    await ensureOnboarded();
+    const content = $("sim-cont").checked ? buildHistory() : text;
+    const resp = await fetch("/api/journal", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ content, userId: SIM_USER })
+    });
+    const j = await resp.json();
+    document.getElementById("typing")?.remove();
+    if(!j.success){
+      simMessages.push({ role:"ego", text:"调用失败：" + (j.error || "未知错误")
+        + (j.onboardingRequired ? "（需先完成气质测试）" : "") });
+    } else {
+      const d = j.data || {};
+      const sf = d.safety || {};
+      const flag = sf.anyCensored ? "⚠ 已触发安全过滤"
+                 : (sf.inputFlagged ? "⚠ 输入被安全模块标记" : "");
+      simMessages.push({ role:"id", text:(d.id && d.id.text) || "", flag });
+      simMessages.push({ role:"ego", text:(d.ego && d.ego.text) || "", flag });
+      simMessages.push({ role:"superego", text:(d.superego && d.superego.text) || "", flag });
+    }
+  }catch(e){
+    document.getElementById("typing")?.remove();
+    simMessages.push({ role:"ego", text:"网络错误：" + e.message + "（请确认后端 http://localhost:3200 正在运行）" });
+  }
+  simBusy = false;
+  renderSim();
+}
+
+$("sim-send").addEventListener("click", sendSim);
+$("sim-clear").addEventListener("click", ()=>{ simMessages = []; renderSim(); });
+$("sim-input").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); sendSim(); }
+});
+["f-role","f-rules","f-note","f-self","f-example","f-audit"].forEach(id=>{
+  $(id).addEventListener("input", ()=>{ readForm(); render(); });
+});
+
+$("btn-copy").addEventListener("click", ()=>{ readForm();
+  navigator.clipboard.writeText(assemble(state[current])).then(()=>toast("已复制完整提示词")); });
+$("btn-copy2").addEventListener("click", ()=>{ readForm();
+  navigator.clipboard.writeText(assemble(state[current])).then(()=>toast("已复制完整提示词")); });
+$("btn-code").addEventListener("click", ()=>{ readForm();
+  navigator.clipboard.writeText(genTs(current)).then(()=>toast("已复制 .ts 代码")); });
+$("btn-json").addEventListener("click", ()=>{ readForm();
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob); const a = document.createElement("a");
+  a.href = url; a.download = "triune-prompts.json"; a.click(); URL.revokeObjectURL(url);
+  toast("已导出 triune-prompts.json"); });
+$("btn-reset").addEventListener("click", ()=>{
+  state[current] = JSON.parse(JSON.stringify(DEFAULTS[current])); fillForm(); toast("已重置为当前存档"); });
+
+// 初始化
+applyTheme(current);
+document.querySelector('.agent[data-k="id"]').classList.add("active");
+fillForm();
+</script>
+</body>
+</html>

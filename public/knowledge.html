@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Triune · 三我知识库</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --border:#e6e9ef;
+    --ink:#1f2430; --muted:#838b9a; --muted-2:#aab1bf;
+    --accent:#2563eb; --accent-soft:#eaf1fe; --accent-ink:#1d4ed8;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:960px;margin:0 auto;padding:22px 22px 60px;}
+
+  .topbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .topbar h1{margin:0;font-size:21px;font-weight:650;}
+  .topbar p{margin:6px 0 0;font-size:13px;color:var(--muted);line-height:1.6;}
+  .topbar .who{font-size:12px;color:var(--accent-ink);background:var(--accent-soft);
+        padding:6px 12px;border-radius:999px;font-weight:500;}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+        box-shadow:var(--shadow);margin-top:18px;overflow:hidden;}
+  .card-h{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;
+          justify-content:space-between;background:var(--panel-2);}
+  .card-h h3{margin:0;font-size:14px;font-weight:600;}
+  .card-h .tag{font-size:11.5px;color:var(--muted);}
+  .card-b{padding:16px;}
+
+  .field{margin-bottom:14px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;margin-bottom:6px;}
+  .field label .dot{width:16px;height:16px;border-radius:5px;color:#fff;font-size:10px;
+        display:flex;align-items:center;justify-content:center;font-weight:700;}
+  textarea,input,select{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+        font-size:13px;line-height:1.6;color:var(--ink);background:#fcfdff;transition:.15s;font-family:inherit;}
+  textarea:focus,input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
+  textarea{resize:vertical;}
+  .row{display:flex;gap:10px;flex-wrap:wrap;}
+  .row > *{flex:1;min-width:160px;}
+
+  .styles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+  @media(max-width:760px){.styles{grid-template-columns:1fr;}}
+
+  button{font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--panel);
+         color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:.15s;font-weight:500;}
+  button:hover{border-color:var(--muted-2);transform:translateY(-1px);}
+  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.primary:hover{filter:brightness(1.05);}
+  button.danger{color:#c0392b;border-color:#f0c5c0;background:#fff;}
+  button.danger:hover{background:#fdf2f0;}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+  .docs{display:flex;flex-direction:column;gap:10px;}
+  .doc{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);
+       border-radius:11px;background:var(--panel-2);}
+  .doc .meta{flex:1;min-width:0;}
+  .doc .ttl{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px;}
+  .doc .badge{font-size:10.5px;padding:2px 8px;border-radius:999px;font-weight:600;}
+  .badge.diary{background:#e7f0ff;color:#2563eb;}
+  .badge.note{background:#e9f7ef;color:#0a7a44;}
+  .badge.experience{background:#f3edff;color:#7c3aed;}
+  .doc .ex{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6;word-break:break-word;}
+  .doc .dt{font-size:11px;color:var(--muted-2);margin-top:4px;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:22px 0;}
+
+  .brief{background:var(--accent-soft);border:1px solid #d4e2fb;border-radius:11px;padding:13px 15px;
+         font-size:13px;line-height:1.75;color:#243044;white-space:pre-wrap;min-height:40px;}
+  .brief .ph{color:var(--muted);}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;}
+  .filebtn{display:inline-flex;align-items:center;gap:6px;}
+  input[type=file]{padding:7px 10px;}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);background:#1f2430;
+         color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;transition:.22s;pointer-events:none;
+         box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:90vw;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  a.back{font-size:12.5px;color:var(--accent-ink);text-decoration:none;}
+  a.back:hover{text-decoration:underline;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <h1>三我知识库 · 人格塑造台</h1>
+      <p>上传你的日记 / 笔记 / 经历，构建专属知识库；并分别为本我、自我、超我设定语气与风格。<br>
+         这些信息会被提炼成「用户画像」，让三我更懂你、更像你想要的陪伴方式。</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span class="who" id="who">用户：default</span>
+      <a class="back" href="/widget.html">← 回到陪伴窗</a>
+    </div>
+  </div>
+
+  <!-- 画像简报 -->
+  <div class="card">
+    <div class="card-h"><h3>当前用户画像简报</h3><span class="tag" id="brief-tag">尚未生成</span></div>
+    <div class="card-b">
+      <div class="brief" id="brief"><span class="ph">上传内容后，系统会自动提炼一份「用户画像简报」并注入三我回应。</span></div>
+    </div>
+  </div>
+
+  <!-- 三我风格塑造 -->
+  <div class="card">
+    <div class="card-h"><h3>三我语气 / 风格塑造</h3><span class="tag">自由文本，直接告诉三我该怎么说话</span></div>
+    <div class="card-b">
+      <div class="styles">
+        <div class="field">
+          <label><span class="dot" style="background:#2563eb">本</span>本我 Id</label>
+          <textarea id="style-id" rows="6" placeholder="例：说话直接、带点痞气，爱用反问戳破我，但底色是关心。"></textarea>
+        </div>
+        <div class="field">
+          <label><span class="dot" style="background:#0d9488">自</span>自我 Ego</label>
+          <textarea id="style-ego" rows="6" placeholder="例：温柔理性，先接住情绪再给建议，像知心朋友。"></textarea>
+        </div>
+        <div class="field">
+          <label><span class="dot" style="background:#7c3aed">超</span>超我 Superego</label>
+          <textarea id="style-superego" rows="6" placeholder="例：温和坚定，从更高的价值视角引导，不审判。"></textarea>
+        </div>
+      </div>
+      <div class="row" style="margin-top:6px;align-items:center;">
+        <span class="grow"></span>
+        <button class="primary" id="save-style">保存三我风格</button>
+      </div>
+      <div class="hint">风格设定会优先于默认语气，立即对后续每条日记生效。</div>
+    </div>
+  </div>
+
+  <!-- 上传内容 -->
+  <div class="card">
+    <div class="card-h"><h3>上传内容到知识库</h3><span class="tag">日记 / 笔记 / 经历</span></div>
+    <div class="card-b">
+      <div class="row">
+        <div class="field" style="flex:2;">
+          <label>标题</label>
+          <input id="doc-title" type="text" placeholder="例如：2024 转折之年 / 和导师的一次长谈" />
+        </div>
+        <div class="field" style="flex:1;">
+          <label>类型</label>
+          <select id="doc-kind">
+            <option value="diary">日记</option>
+            <option value="note">笔记</option>
+            <option value="experience">经历</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>内容</label>
+        <textarea id="doc-content" rows="6" placeholder="粘贴或输入你的日记、笔记、经历…（单次上限 20000 字）"></textarea>
+      </div>
+      <div class="row" style="align-items:center;">
+        <label class="filebtn" style="font-weight:400;color:var(--accent-ink);cursor:pointer;">
+          <input type="file" id="doc-file" accept=".txt,.md,.text" style="width:auto;" /> 从 .txt/.md 文件读取
+        </label>
+        <span class="grow"></span>
+        <button id="cancel-edit" style="display:none;">取消编辑</button>
+        <button class="primary" id="add-doc">添加内容</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 已上传列表 -->
+  <div class="card">
+    <div class="card-h"><h3>已上传内容</h3><span class="tag" id="doc-count">0 篇</span></div>
+    <div class="card-b">
+      <div class="docs" id="docs"><div class="empty">还没有内容，先在上方添加一篇吧。</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const userId = new URLSearchParams(location.search).get("userId") || "default";
+document.getElementById("who").textContent = "用户：" + userId;
+
+function toast(msg){
+  const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1600);
+}
+function esc(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function fmtDate(iso){
+  try { return new Date(iso).toLocaleString("zh-CN", {month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}); }
+  catch { return ""; }
+}
+
+async function loadAll(){
+  try{
+    const r = await fetch("/api/knowledge/" + encodeURIComponent(userId));
+    const j = await r.json();
+    if(!j.success) return;
+    document.getElementById("style-id").value = (j.personaStyle && j.personaStyle.id) || "";
+    document.getElementById("style-ego").value = (j.personaStyle && j.personaStyle.ego) || "";
+    document.getElementById("style-superego").value = (j.personaStyle && j.personaStyle.superego) || "";
+    if(j.brief && j.brief.trim()){
+      document.getElementById("brief").textContent = j.brief;
+      document.getElementById("brief-tag").textContent = "已生成" + (j.briefUpdatedAt ? " · " + fmtDate(j.briefUpdatedAt) : "");
+    } else {
+      document.getElementById("brief-tag").textContent = "尚未生成";
+    }
+    renderDocs(j.documents || [], j.docCount || 0);
+  }catch(e){ toast("加载失败：" + e.message); }
+}
+
+function renderDocs(docs, count){
+  document.getElementById("doc-count").textContent = count + " 篇";
+  const box = document.getElementById("docs");
+  if(docs.length === 0){ box.innerHTML = '<div class="empty">还没有内容，先在上方添加一篇吧。</div>'; return; }
+  box.innerHTML = "";
+  docs.slice().reverse().forEach(d=>{
+    const el = document.createElement("div");
+    el.className = "doc";
+    el.innerHTML =
+      '<div class="meta">' +
+        '<div class="ttl">' + esc(d.title) +
+          ' <span class="badge ' + d.kind + '">' + ({diary:"日记",note:"笔记",experience:"经历"}[d.kind]||d.kind) + '</span>' +
+        '</div>' +
+        '<div class="ex">' + esc(d.excerpt) + '</div>' +
+        '<div class="dt">' + fmtDate(d.createdAt) + ' · ' + d.length + ' 字</div>' +
+      '</div>' +
+      '<button data-act="edit">编辑</button>' +
+      '<button class="danger" data-act="del">删除</button>';
+    el.querySelector('[data-act="edit"]').addEventListener("click", ()=>startEdit(d.id));
+    el.querySelector('[data-act="del"]').addEventListener("click", ()=>deleteDoc(d.id));
+    box.appendChild(el);
+  });
+}
+
+// ===== 编辑已上传文档：回填到上方表单，保存时走 PUT =====
+let editingId = null;
+
+async function startEdit(docId){
+  try{
+    // 列表只有摘要，编辑需要全文——从详情接口拉取
+    const r = await fetch("/api/knowledge/" + encodeURIComponent(userId) + "/doc/" + encodeURIComponent(docId));
+    const j = await r.json();
+    if(!j.success){ toast("读取失败：" + (j.error||"")); return; }
+    editingId = docId;
+    document.getElementById("doc-title").value = j.doc.title || "";
+    document.getElementById("doc-kind").value = j.doc.kind || "note";
+    document.getElementById("doc-content").value = j.doc.content || "";
+    document.getElementById("add-doc").textContent = "保存修改";
+    document.getElementById("cancel-edit").style.display = "";
+    document.getElementById("doc-content").scrollIntoView({behavior:"smooth", block:"center"});
+    toast("已进入编辑模式");
+  }catch(e){ toast("读取失败：" + e.message); }
+}
+
+function exitEdit(){
+  editingId = null;
+  document.getElementById("doc-title").value = "";
+  document.getElementById("doc-content").value = "";
+  document.getElementById("doc-file").value = "";
+  document.getElementById("add-doc").textContent = "添加内容";
+  document.getElementById("cancel-edit").style.display = "none";
+}
+document.getElementById("cancel-edit").addEventListener("click", exitEdit);
+
+document.getElementById("save-style").addEventListener("click", async ()=>{
+  const body = {
+    id: document.getElementById("style-id").value,
+    ego: document.getElementById("style-ego").value,
+    superego: document.getElementById("style-superego").value,
+  };
+  try{
+    const r = await fetch("/api/knowledge/" + encodeURIComponent(userId) + "/style", {
+      method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    });
+    const j = await r.json();
+    if(j.success) toast("三我风格已保存"); else toast("保存失败：" + (j.error||""));
+  }catch(e){ toast("保存失败：" + e.message); }
+});
+
+document.getElementById("doc-file").addEventListener("change", (e)=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{ document.getElementById("doc-content").value = String(reader.result || ""); };
+  reader.readAsText(f);
+});
+
+document.getElementById("add-doc").addEventListener("click", async ()=>{
+  const btn = document.getElementById("add-doc");
+  const title = document.getElementById("doc-title").value;
+  const kind = document.getElementById("doc-kind").value;
+  const content = document.getElementById("doc-content").value;
+  if(!content.trim()){ toast("内容不能为空"); return; }
+  btn.disabled = true;
+  try{
+    const isEdit = !!editingId;
+    const url = isEdit
+      ? "/api/knowledge/" + encodeURIComponent(userId) + "/doc/" + encodeURIComponent(editingId)
+      : "/api/knowledge/" + encodeURIComponent(userId) + "/doc";
+    const r = await fetch(url, {
+      method: isEdit ? "PUT" : "POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ title, kind, content })
+    });
+    const j = await r.json();
+    if(j.success){
+      toast(isEdit ? "已保存修改，正在更新画像简报…" : "已添加，正在生成画像简报…");
+      exitEdit();
+      loadAll();
+    } else {
+      toast((isEdit ? "保存失败：" : "添加失败：") + (j.error||""));
+    }
+  }catch(e){ toast("操作失败：" + e.message); }
+  btn.disabled = false;
+});
+
+async function deleteDoc(docId){
+  try{
+    const r = await fetch("/api/knowledge/" + encodeURIComponent(userId) + "/doc/" + encodeURIComponent(docId), { method:"DELETE" });
+    const j = await r.json();
+    if(j.success){ toast("已删除"); loadAll(); } else toast("删除失败：" + (j.error||""));
+  }catch(e){ toast("删除失败：" + e.message); }
+}
+
+loadAll();
+</script>
+</body>
+</html>

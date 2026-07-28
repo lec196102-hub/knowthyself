@@ -1,0 +1,103 @@
+/* =====================================================================
+ * Triune · 主题变量
+ * 深色为默认（:root），浅色通过 <html data-theme="light"> 覆盖。
+ * 各页面只需把颜色字面量写成 var(--xxx)，即可随主题切换。
+ * 主题状态由 theme.js 管理（localStorage: tj_theme = light/dark/system）。
+ * ===================================================================== */
+
+:root {
+  /* 文本 */
+  --text: #e6edf3;
+  --name: #c9d1d9;
+  --muted: #8b949e;
+  --muted-2: #6e7681;
+
+  /* 描边 / 分隔 */
+  --border: rgba(255, 255, 255, 0.12);
+  --border-weak: rgba(255, 255, 255, 0.07);
+
+  /* 表面（弹层 / 输入区等较实面板） */
+  --surface: rgba(32, 38, 47, 0.97);
+  --surface-2: rgba(255, 255, 255, 0.05); /* 半透明浅表面：预览 / 输入底 / 芯片 */
+  --input-bg: rgba(13, 17, 23, 0.6);
+
+  /* 玻璃浮窗（桌宠 widget） */
+  --w-bg: rgba(22, 27, 34, 0.5);
+  --w-shadow: 0 26px 80px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --hairline-a: rgba(255, 255, 255, 0.42);
+  --hairline-b: rgba(127, 119, 221, 0.34);
+
+  /* 幽灵按钮（图标 / 次级） */
+  --btn-ghost: rgba(255, 255, 255, 0.1);
+  --btn-ghost-hover: rgba(255, 255, 255, 0.18);
+
+  /* 杂项 */
+  --scroll: rgba(255, 255, 255, 0.18);
+  --code-bg: rgba(0, 0, 0, 0.4);
+  --link-bg: rgba(56, 139, 200, 0.08);
+  --link-border: rgba(56, 139, 253, 0.25);
+
+  /* 整页背景 / 顶栏（index 等整页用） */
+  --body-bg: radial-gradient(1200px 600px at 18% -12%, #16203a 0%, #0d1117 55%, #07090d 100%);
+  --header-bg: rgba(22, 27, 34, 0.6);
+  --nav-border: rgba(139, 148, 158, 0.35);
+}
+
+/* ===== 浅色：暖、柔、治愈，利于截图传播 ===== */
+:root[data-theme="light"] {
+  --text: #3a3340;
+  --name: #5b5566;
+  --muted: #6b7280;
+  --muted-2: #9aa1ab;
+
+  --border: rgba(40, 30, 60, 0.14);
+  --border-weak: rgba(40, 30, 60, 0.08);
+
+  --surface: rgba(255, 255, 255, 0.95);
+  --surface-2: rgba(40, 30, 60, 0.045);
+  --input-bg: #ffffff;
+
+  --w-bg: rgba(255, 252, 248, 0.66);
+  --w-shadow: 0 24px 70px rgba(60, 50, 90, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --hairline-a: rgba(255, 158, 125, 0.55);
+  --hairline-b: rgba(155, 139, 255, 0.5);
+
+  --btn-ghost: rgba(40, 30, 60, 0.06);
+  --btn-ghost-hover: rgba(40, 30, 60, 0.12);
+
+  --scroll: rgba(40, 30, 60, 0.18);
+  --code-bg: rgba(40, 30, 60, 0.08);
+  --link-bg: rgba(56, 139, 253, 0.08);
+  --link-border: rgba(56, 139, 253, 0.28);
+
+  --body-bg: radial-gradient(1200px 720px at 8% -8%, #ffe6d2 0%, #fdeaf3 38%, #eaf0ff 100%);
+  --header-bg: rgba(255, 255, 255, 0.72);
+  --nav-border: rgba(40, 30, 60, 0.16);
+}
+
+/* ===== 主题切换控件（🎨 弹层 / 顶栏共用） ===== */
+.theme-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.theme-row .theme-label { font-size: 11px; color: var(--muted); margin-right: 2px; flex: 0 0 auto; }
+.theme-row .topt {
+  flex: 1; padding: 6px 0; border-radius: 9px; cursor: pointer; font-size: 11.5px;
+  border: 1px solid var(--border); background: var(--btn-ghost); color: var(--text);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.theme-row .topt:hover { background: var(--btn-ghost-hover); }
+  .theme-row .topt.active {
+    border-color: #378ADD; color: #378ADD; font-weight: 700;
+    box-shadow: 0 0 0 1px #378ADD;
+  }
+
+  /* 顶栏紧凑型主题切换（index 等整页用） */
+  .theme-seg { display: inline-flex; gap: 4px; margin-left: auto; flex: 0 0 auto; }
+  .theme-seg .topt { width: 34px; padding: 5px 0; flex: none; font-size: 12px; }
+
+/* ===== 无障碍：尊重「减弱动效」偏好（M1） ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
