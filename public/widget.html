@@ -87,22 +87,26 @@
        旧逻辑是 height:128 + object-fit:cover，会把竖图（典型立绘 9:16）压成一条带。 */
     .stage {
       flex: 0 0 auto; display: none; position: relative;
-      max-height: min(30%, 220px);   /* 不超过父 .widget 的 30% + 绝对不超过 220px（更省空间）*/
-      min-height: 80px;
+      min-height: 200px;                         /* 立绘最小尺寸，看着有存在感 */
+      max-height: min(45%, 340px);               /* 不超过 .widget 的 45% + 绝对 ≤ 340px（防霸屏） */
       overflow: hidden;
-      background: rgba(0,0,0,.18);
+      padding: 4px 0;                            /* 给图一点呼吸 */
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.22));
       border-bottom: 1px solid var(--border-weak);
     }
     .stage.has-image { display: block; }
     #stageMedia {
-      /* 关键：覆盖住整个 .stage，让 img 的 object-fit:contain 真正在 stage 框内生效 */
       position: absolute; inset: 0;
     }
     #stageMedia img, #stageMedia video {
       width: 100%; height: 100%;
-      object-fit: contain;          /* 完整显示，不裁切 */
+      object-fit: cover;                          /* 填满 stage，不再是「中间贴一小条」 */
+      object-position: center 22%;                /* 人物立绘/头像照顶部对齐——脸不被裁 */
       background: transparent;
       display: block;
+      border-radius: 14px;                        /* 圆角增加「角色」感 */
+      box-shadow: 0 8px 22px rgba(0,0,0,.28);     /* 投影抬出层次 */
+      filter: saturate(1.05) contrast(1.02);      /* 微微提质感 */
       animation: windowIn .55s ease;
     }
     /* 图片上的状态浮条（仅在有图时显示） */
@@ -721,8 +725,8 @@ function fitStageHeight() {
   if (!nw || !nh) return;
   const w = stage.clientWidth || 360;
   const ratio = nh / nw;
-  const maxByWidget = widget ? Math.round(widget.clientHeight * 0.3) : 220;
-  const target = Math.max(80, Math.min(maxByWidget, 220, Math.round(w * ratio)));
+  const maxByWidget = widget ? Math.round(widget.clientHeight * 0.45) : 320;
+  const target = Math.max(200, Math.min(maxByWidget, 340, Math.round(w * ratio)));
   stage.style.height = target + "px";
 }
 
