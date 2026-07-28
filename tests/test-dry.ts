@@ -55,7 +55,7 @@ const allPrompts = [ID_BASE_PROMPT, EGO_BASE_PROMPT, SUPEREGO_BASE_PROMPT];
 for (const prompt of allPrompts) {
   assert(prompt.includes("不支持这种做法"), `包含安全约束`);
   assert(prompt.length > 100, `长度充足: ${prompt.length}`);
-  assert(prompt.length < 3000, `长度合理: ${prompt.length}`);
+  assert(prompt.length < 4200, `长度合理: ${prompt.length}`);
 }
 
 // ========== 气质测试模块 ==========

@@ -6,9 +6,10 @@ import { EGO_BASE_PROMPT, buildEgoFinalPrompt } from "../agents/ego.js";
 import { SUPEREGO_BASE_PROMPT, buildSuperegoDebatePrompt } from "../agents/superego.js";
 import { checkContentSafety, validateUserInput } from "./safety.js";
 import type { TemperamentProfile, TemperamentStyleMod } from "./temperament.js";
-import { calculateScores, determineProfile, getStyleModulation } from "./temperament.js";
+import { calculateScores, determineProfile, getStyleModulation, buildCongrats } from "./temperament.js";
 import type { AnswerSheet, TemperamentScores } from "./temperament.js";
-import { loadProfile } from "../storage/profile-store.js";
+import { inferTemperamentFromTexts, type LanguageInferResult } from "./temperament.js";
+import { loadProfile, saveProfile, type ProfileRecord } from "../storage/profile-store.js";
 import { MemoryStore, buildMemoryContext, mergeMemories, extractMemories } from "./memory.js";
 import { loadKnowledge, saveKnowledge } from "../storage/knowledge-store.js";
 import {
@@ -86,6 +87,46 @@ export class TriuneEngine {
     return profile;
   }
 
+  /** 本地日期 YYYY-MM-DD（用于「每天不重复」判定） */
+  private todayStr(): string {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
+
+  /**
+   * 推断 + 落盘气质画像（语言来源）的单一入口。
+   * 由「写几句话测气质」「导入历史日记后自动测」「fromHistory 聚合」共用，
+   * 避免各处重复拼装 ProfileRecord。
+   * 返回推断结果与落盘路径，供 API 直接透传。
+   */
+  async inferAndSaveProfile(
+    userId: string,
+    texts: string[],
+  ): Promise<LanguageInferResult & { profile: TemperamentProfile; congrats: string; savedTo: string }> {
+    const { scores, profile, basis, method } = await this.inferTemperamentFromLanguage(userId, texts);
+    const congrats = buildCongrats(profile, "language");
+    const prev = loadProfile(userId);
+    const rec: ProfileRecord = {
+      userId,
+      answers: prev?.answers ?? ({} as AnswerSheet),
+      onboarded: true,
+      completed: true,
+      profile,
+      source: "language",
+      languageSamples: texts.slice(0, 12),
+      inferredAt: new Date().toISOString(),
+      basis,
+      lastDailyDate: prev?.lastDailyDate ?? this.todayStr(),
+      createdAt: prev?.createdAt ?? new Date().toISOString(),
+      completedAt: new Date().toISOString(),
+      congrats,
+    };
+    const savedTo = saveProfile(userId, rec);
+    return { scores, profile, basis, method, congrats, savedTo };
+  }
+
   setUserTemperamentFromScores(userId: string, scores: TemperamentScores): TemperamentProfile {
     const profile = determineProfile(scores);
     this.styleCache.set(userId, getStyleModulation(profile));
@@ -94,6 +135,24 @@ export class TriuneEngine {
 
   getUserStyle(userId: string): TemperamentStyleMod | undefined {
     return this.styleCache.get(userId);
+  }
+
+  /**
+   * 用用户自己的语言（日记 / 随笔 / 碎碎念）推断气质画像，并注册到引擎。
+   * 优先 LLM 语义推断，无客户端或失败时降级到启发式（零依赖）。
+   * 返回推断结果与所用路径，供调用方落盘与告知用户。
+   */
+  async inferTemperamentFromLanguage(
+    userId: string,
+    texts: string[],
+  ): Promise<LanguageInferResult & { profile: TemperamentProfile }> {
+    const client = this.reviewClient ?? this.mainClient;
+    const model = getReviewModelConfig().model;
+    const result = await inferTemperamentFromTexts(client, model, texts);
+    const profile = determineProfile(result.scores);
+    // 注册到内存缓存，后续日记立即套用
+    this.styleCache.set(userId, getStyleModulation(profile));
+    return { ...result, profile };
   }
 
   /** 异步更新用户长期记忆（不阻塞主响应） */
@@ -137,9 +196,18 @@ export class TriuneEngine {
     let style = this.styleCache.get(userId);
     if (!style) {
       const rec = loadProfile(userId);
-      if (rec?.answers && Object.keys(rec.answers).length > 0) {
+      if (rec?.profile) {
+        // 语言来源画像已含完整 profile，直接套用（无需问卷答案）
         try {
-          const provisional = rec.profile ?? determineProfile(calculateScores(rec.answers));
+          style = getStyleModulation(rec.profile);
+          this.styleCache.set(userId, style);
+        } catch {
+          /* profile 结构异常时忽略，走无调制兜底 */
+        }
+      } else if (rec?.answers && Object.keys(rec.answers).length > 0) {
+        // 问卷来源：用已答内容算一个临时画像来调制语气（答得越多越准）
+        try {
+          const provisional = determineProfile(calculateScores(rec.answers));
           style = getStyleModulation(provisional);
           this.styleCache.set(userId, style);
         } catch {

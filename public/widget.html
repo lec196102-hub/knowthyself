@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Triune · 陪伴</title>
+  <title>老己</title>
   <script>
     (function(){try{var m=localStorage.getItem('tj_theme')||'system';var t=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.dataset.theme=t;}catch(e){}})();
   </script>
@@ -52,22 +52,35 @@
       border-bottom: 1px solid var(--border-weak);
     }
     .bar .logo {
-      width: 18px; height: 18px; border-radius: 6px;
-      background: linear-gradient(135deg, #378ADD, #7F77DD);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 10px; color: #fff; box-shadow: 0 2px 8px rgba(55,138,221,.45);
+      width: 22px; height: 22px; display: block;
+      border-radius: 5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
     }
-    .bar .name { font-size: 12px; font-weight: 600; color: var(--name); letter-spacing: .3px; }
+    .bar .name { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
     .bar .spacer { flex: 1; }
     .bar .mini {
-      -webkit-app-region: no-drag; width: 22px; height: 22px; border-radius: 50%;
-      border: none; background: var(--btn-ghost); color: var(--name);
-      cursor: pointer; font-size: 11px; line-height: 1; transition: background .15s, transform .15s;
+      -webkit-app-region: no-drag;
+      width: 26px; height: 26px; padding: 0;
+      border-radius: 9px;
+      border: 1px solid rgba(55,138,221,.4);
+      background: linear-gradient(135deg, rgba(55,138,221,.14), rgba(127,119,221,.14));
+      color: var(--name);
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .15s, border-color .15s;
     }
-    .bar .mini:hover { background: var(--btn-ghost-hover); transform: translateY(-1px); }
+    .bar .mini:hover {
+      background: linear-gradient(135deg, rgba(55,138,221,.3), rgba(127,119,221,.3));
+      border-color: rgba(55,138,221,.7);
+      transform: translateY(-1px);
+    }
     .bar .mini:active { transform: translateY(0); }
-    .bar .mini.close { background: rgba(248, 81, 73, 0.9); color: #fff; }
-    .bar .mini.close:hover { background: rgb(248, 81, 73); }
+    .bar .mini svg { display: block; }
+    .bar .mini.close {
+      background: linear-gradient(135deg, rgba(248,81,73,.78), rgba(248,81,73,.6));
+      color: #fff; border-color: rgba(248,81,73,.6);
+    }
+    .bar .mini.close:hover { background: rgba(248,81,73,.95); border-color: rgba(248,81,73,.85); }
 
     /* ====== 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 ====== */
     .stage {
@@ -91,31 +104,91 @@
 
     /* 个性化设置弹层 */
     .pop {
-      position: absolute; top: 46px; right: 10px; z-index: 20; width: 234px;
+      position: absolute; top: 46px; right: 10px; z-index: 20; width: 296px;
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; padding: 13px; color: var(--text);
-      box-shadow: 0 18px 50px rgba(0,0,0,.5);
+      border-radius: 16px; padding: 18px; color: var(--text);
+      box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.02);
       display: none; -webkit-app-region: no-drag;
-      animation: pop .25s cubic-bezier(.22,1,.36,1);
+      animation: pop .28s cubic-bezier(.22,1,.36,1);
     }
     .pop.show { display: block; }
-    .pop h4 { font-size: 12.5px; margin-bottom: 9px; color: var(--name); font-weight: 700; }
+
+    /* 分段 */
+    .pop-divider { height: 1px; background: var(--border); margin: 18px -18px; }
+    .pop-section-head { display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 10px; gap: 8px; }
+    .pop-section-title { font-size: 13px; color: var(--name); font-weight: 700; letter-spacing: -.01em; }
+    .pop-section-hint { font-size: 11px; color: var(--muted-2); }
+
+    /* 预览区 */
     .pop .preview {
-      width: 100%; height: 92px; border-radius: 10px; margin-bottom: 10px;
+      position: relative; width: 100%; height: 112px; border-radius: 12px;
       background: var(--surface-2) center/cover no-repeat;
-      border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: var(--muted); overflow: hidden;
+      border: 1px dashed var(--border); overflow: hidden;
+      transition: border-color .2s;
     }
-    .pop .preview img { max-width: 100%; max-height: 100%; object-fit: cover; border-radius: 9px; }
-    .pop .row { display: flex; gap: 8px; }
-    .pop button {
-      flex: 1; padding: 7px 0; border-radius: 10px; border: 1px solid var(--border);
-      background: var(--btn-ghost); color: var(--text); cursor: pointer; font-size: 12px; transition: background .15s;
+    .pop .preview.has-image { border-style: solid; border-color: var(--border-weak); }
+    .pop .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pop .preview-empty {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; color: var(--muted); font-size: 12px;
     }
-    .pop button:hover { background: var(--btn-ghost-hover); }
-    .pop button.primary { background: linear-gradient(135deg, #1f6feb, #378ADD); border-color: rgba(255,255,255,.2); color: #fff; }
-    .pop button.danger { color: #ffc9c9; }
-    .pop .tip { font-size: 10.5px; color: var(--muted-2); margin-top: 9px; line-height: 1.5; }
+    .pop .preview-empty svg { opacity: .5; }
+    .pop .preview-empty b { font-weight: 500; }
+    .pop .preview-empty small { font-size: 10.5px; color: var(--muted-2); }
+
+    /* 文件元信息 */
+    .pop .meta { display: none; align-items: center; justify-content: space-between;
+      font-size: 11px; color: var(--muted-2); margin: 8px 2px 0;
+      font-variant-numeric: tabular-nums; }
+    .pop .meta.show { display: flex; }
+    .pop .meta b { color: var(--text); font-weight: 600; max-width: 60%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* 操作按钮 */
+    .pop .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .pop .pbtn {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 12px; border-radius: 11px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--btn-ghost); color: var(--text);
+      font-size: 12.5px; font-weight: 500; font-family: inherit;
+      transition: background .15s, border-color .15s, transform .1s, box-shadow .15s;
+    }
+    .pop .pbtn:hover { background: var(--btn-ghost-hover); transform: translateY(-1px); }
+    .pop .pbtn:active { transform: translateY(0); }
+    .pop .pbtn:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .pop .pbtn svg { flex-shrink: 0; }
+    .pop .pbtn.primary {
+      background: linear-gradient(135deg, #1f6feb, #378ADD);
+      border-color: rgba(255,255,255,.2); color: #fff;
+      box-shadow: 0 4px 12px rgba(55,138,221,.3), inset 0 1px 0 rgba(255,255,255,.15);
+    }
+    .pop .pbtn.primary:hover {
+      background: linear-gradient(135deg, #2878ff, #4a9aff);
+      box-shadow: 0 6px 18px rgba(55,138,221,.4), inset 0 1px 0 rgba(255,255,255,.18);
+    }
+    .pop .pbtn.danger { color: #ffc9c9; }
+    .pop .pbtn.danger:hover { background: rgba(248,81,73,.15); border-color: rgba(248,81,73,.4); color: #ff9b9b; }
+
+    /* 主题分段控件 */
+    .pop .theme-seg-new {
+      display: flex; gap: 4px; padding: 4px;
+      background: var(--surface-2); border-radius: 12px; border: 1px solid var(--border);
+    }
+    .pop .theme-seg-new .topt {
+      flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;
+      padding: 7px 4px; border-radius: 9px; border: 0; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 11.5px; font-weight: 500;
+      transition: all .15s; font-family: inherit;
+    }
+    .pop .theme-seg-new .topt:hover { color: var(--text); background: rgba(255,255,255,.04); }
+    .pop .theme-seg-new .topt.active {
+      background: linear-gradient(135deg, #1f6feb, #378ADD); color: #fff; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(55,138,221,.35), inset 0 1px 0 rgba(255,255,255,.15);
+    }
+    .pop .theme-seg-new .topt svg { opacity: .8; }
+    .pop .theme-seg-new .topt.active svg { opacity: 1; }
 
     /* 聊天区（透出玻璃底色） */
     .chat { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 11px; position: relative; z-index: 1; }
@@ -210,14 +283,47 @@
 <body>
   <div class="widget">
     <div class="bar">
-      <div class="logo">◈</div>
-      <div class="name">Triune</div>
+      <img class="logo" src="assets/laoji-logo.png" width="22" height="22" alt="老己">
+      <div class="name">老己</div>
       <div class="spacer"></div>
-      <button class="mini" onclick="togglePop()" title="个性化">🎨</button>
-      <button class="mini" onclick="window.electronAPI?.openKnowledge()" title="三我知识库">📚</button>
-      <button class="mini" onclick="window.electronAPI ? window.electronAPI.openChatlog() : window.open('/chatlog.html','_blank')" title="聊天日志">🗒</button>
-      <button class="mini" onclick="window.electronAPI?.minimize()" title="隐藏">—</button>
-      <button class="mini close" onclick="window.electronAPI?.close()" title="关闭">×</button>
+      <button class="mini" onclick="TriuneImport && TriuneImport.open()" title="导入旧日记，自动生成气质画像" aria-label="导入旧日记">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="rgba(55,138,221,.18)" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M5.5 13.5 L5.5 16.5 L8.5 13.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="rgba(55,138,221,.18)"/>
+          <rect x="9" y="10" width="13" height="11" rx="3" fill="rgba(55,138,221,.18)" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M15.5 21 L15.5 24 L18.5 21" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" fill="rgba(55,138,221,.18)"/>
+        </svg>
+      </button>
+      <button class="mini" onclick="togglePop()" title="个性化" aria-label="个性化">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.7-.4 2-.9.2-.4.2-.9 0-1.4-.2-.4-.2-.9 0-1.3.2-.4.7-.7 1.2-.7H17a4 4 0 0 0 4-4 4 4 0 0 0-4-4h-1.2c-.5 0-1-.3-1.2-.7-.2-.4-.2-.9 0-1.3.2-.5.2-1 0-1.4-.3-.5-.9-.9-2-.9z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="7.5" cy="11.5" r="1" fill="currentColor"/>
+          <circle cx="12" cy="7.5" r="1" fill="currentColor"/>
+          <circle cx="16" cy="11" r="1" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="mini" onclick="window.electronAPI?.openKnowledge()" title="知识库" aria-label="知识库">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4.5h6a3 3 0 0 1 3 3v13M20 4.5h-6a3 3 0 0 0-3 3v13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 4.5v13h6a3 3 0 0 1 3 3M20 4.5v13h-6a3 3 0 0 0-3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="mini" onclick="window.electronAPI ? window.electronAPI.openChatlog() : window.open('/chatlog.html','_blank')" title="聊天日志" aria-label="聊天日志">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4.5" y="3" width="15" height="18" rx="2.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="mini" onclick="window.electronAPI?.minimize()" title="隐藏" aria-label="隐藏">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="mini close" onclick="window.electronAPI?.close()" title="关闭" aria-label="关闭">
+        <svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
     <div class="banner" id="banner"></div>
 
@@ -229,19 +335,71 @@
 
     <!-- 个性化设置弹层 -->
     <div class="pop" id="pop">
-      <h4>个性化 · 顶部图片</h4>
-      <div class="preview" id="popPreview">未设置图片</div>
-      <div class="row">
-        <button class="primary" onclick="document.getElementById('fileInput').click()">选择图片</button>
-        <button class="danger" onclick="clearStage()">移除</button>
+      <!-- 顶部图片 -->
+      <div>
+        <div class="pop-section-head">
+          <span class="pop-section-title">顶部图片</span>
+          <span class="pop-section-hint">不设则不显示舞台</span>
+        </div>
+        <div class="preview" id="popPreview">
+          <div class="preview-empty" id="popEmpty">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="5" width="18" height="14" rx="2.5"/>
+              <circle cx="9" cy="11" r="1.6"/>
+              <path d="M21 17l-5-5-7 7"/>
+            </svg>
+            <b>未设置图片</b>
+            <small>支持 JPG / PNG / WebP</small>
+          </div>
+        </div>
+        <div class="meta" id="popMeta">
+          <b id="popMetaName">—</b>
+          <span id="popMetaSize">—</span>
+        </div>
+        <div class="actions">
+          <button class="pbtn primary" id="popPickBtn" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <path d="M17 8l-5-5-5 5"/>
+              <path d="M12 3v12"/>
+            </svg>
+            <span>选择图片</span>
+          </button>
+          <button class="pbtn danger" id="popClearBtn" type="button" disabled>移除</button>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display:none" />
       </div>
-      <input type="file" id="fileInput" accept="image/*" onchange="onStageFile(event)" />
-      <div class="tip">设置的图片会显示在顶部舞台；不设置则不显示舞台。图片仅保存在本机浏览器。</div>
-      <div class="theme-row">
-        <span class="theme-label">主题</span>
-        <button class="topt" data-theme-opt="light" onclick="TriuneTheme.set('light')">浅色</button>
-        <button class="topt" data-theme-opt="dark" onclick="TriuneTheme.set('dark')">深色</button>
-        <button class="topt" data-theme-opt="system" onclick="TriuneTheme.set('system')">跟随</button>
+
+      <div class="pop-divider"></div>
+
+      <!-- 主题 -->
+      <div>
+        <div class="pop-section-head">
+          <span class="pop-section-title">主题</span>
+          <span class="pop-section-hint">老己的视觉风格</span>
+        </div>
+        <div class="theme-seg-new">
+          <button class="topt" data-theme-opt="light" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+            </svg>
+            <span>浅色</span>
+          </button>
+          <button class="topt" data-theme-opt="dark" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            <span>深色</span>
+          </button>
+          <button class="topt" data-theme-opt="system" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="14" rx="2"/>
+              <path d="M2 20h20"/>
+            </svg>
+            <span>跟随</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -478,19 +636,57 @@ window.electronAPI = window.electronAPI || {
 
 // ====== 个性化：顶部舞台图片（仅存本机 localStorage） ======
 const STAGE_KEY = "tj_stage_image";
+const STAGE_META_KEY = "tj_stage_meta";
+
+function formatSize(bytes) {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / 1024 / 1024).toFixed(2) + " MB";
+}
+
 function renderStage() {
   const stage = document.getElementById("stage");
   const img = document.getElementById("stageImg");
   const pv = document.getElementById("popPreview");
+  const meta = document.getElementById("popMeta");
+  const metaName = document.getElementById("popMetaName");
+  const metaSize = document.getElementById("popMetaSize");
+  const clearBtn = document.getElementById("popClearBtn");
   const data = localStorage.getItem(STAGE_KEY);
   if (data) {
     stage.classList.add("has-image");
     img.src = data;
+    pv.classList.add("has-image");
     pv.innerHTML = `<img src="${data}" alt="" />`;
+    clearBtn.disabled = false;
+    try {
+      const m = JSON.parse(localStorage.getItem(STAGE_META_KEY) || "null");
+      if (m) {
+        meta.classList.add("show");
+        metaName.textContent = m.name || "—";
+        const dim = m.w ? `${m.w}×${m.h} · ` : "";
+        metaSize.textContent = dim + formatSize(m.size);
+      } else {
+        meta.classList.remove("show");
+      }
+    } catch (_) { meta.classList.remove("show"); }
   } else {
     stage.classList.remove("has-image");
     img.removeAttribute("src");
-    pv.textContent = "未设置图片";
+    pv.classList.remove("has-image");
+    pv.innerHTML =
+      '<div class="preview-empty" id="popEmpty">' +
+        '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="3" y="5" width="18" height="14" rx="2.5"/>' +
+          '<circle cx="9" cy="11" r="1.6"/>' +
+          '<path d="M21 17l-5-5-7 7"/>' +
+        '</svg>' +
+        '<b>未设置图片</b>' +
+        '<small>支持 JPG / PNG / WebP</small>' +
+      '</div>';
+    clearBtn.disabled = true;
+    meta.classList.remove("show");
   }
 }
 function togglePop() {
@@ -514,6 +710,11 @@ function onStageFile(e) {
       let out = src;
       try { out = canvas.toDataURL("image/jpeg", 0.82); } catch (_) {}
       localStorage.setItem(STAGE_KEY, out);
+      try {
+        localStorage.setItem(STAGE_META_KEY, JSON.stringify({
+          name: file.name, size: file.size, w: w, h: h
+        }));
+      } catch (_) {}
       renderStage();
     };
     im.src = src;
@@ -523,8 +724,26 @@ function onStageFile(e) {
 }
 function clearStage() {
   localStorage.removeItem(STAGE_KEY);
+  localStorage.removeItem(STAGE_META_KEY);
   renderStage();
 }
+
+// 新:隐藏的 file input + 美化按钮的桥接
+(function wirePop() {
+  const pick = document.getElementById("popPickBtn");
+  const file = document.getElementById("fileInput");
+  const clear = document.getElementById("popClearBtn");
+  if (pick && file) pick.addEventListener("click", () => file.click());
+  if (file) file.addEventListener("change", onStageFile);
+  if (clear) clear.addEventListener("click", clearStage);
+  // 主题分段控件:点谁就调 TriuneTheme.set,active 态由 theme.js 的 syncControls 自动同步
+  document.querySelectorAll(".pop .theme-seg-new .topt").forEach((b) => {
+    b.addEventListener("click", () => {
+      const v = b.getAttribute("data-theme-opt");
+      if (window.TriuneTheme && window.TriuneTheme.set) window.TriuneTheme.set(v);
+    });
+  });
+})();
 // 点击弹层外部关闭
 document.addEventListener("click", (e) => {
   const pop = document.getElementById("pop");
@@ -566,6 +785,7 @@ renderStage();
 checkHealth();
 </script>
 <script src="/theme.js"></script>
+<script src="/import-diary.js"></script>
 <script src="/onboarding.js"></script>
 </body>
 </html>

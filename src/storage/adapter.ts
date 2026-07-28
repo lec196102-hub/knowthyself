@@ -10,6 +10,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from "fs";
 import { resolve, join } from "path";
+import { encryptJson, decryptJson } from "./crypto.js";
 
 /** 确保目录存在并返回绝对路径 */
 export function ensureDir(dir: string): string {
@@ -23,7 +24,7 @@ export function readJsonFile<T>(dir: string, name: string): T | null {
   const file = join(dir, name);
   if (!existsSync(file)) return null;
   try {
-    return JSON.parse(readFileSync(file, "utf-8")) as T;
+    return decryptJson<T>(readFileSync(file, "utf-8"));
   } catch {
     return null;
   }
@@ -32,7 +33,7 @@ export function readJsonFile<T>(dir: string, name: string): T | null {
 /** 写入单个 JSON 文件（带缩进、UTF-8），自动确保目录存在 */
 export function writeJsonFile(dir: string, name: string, data: unknown): void {
   ensureDir(dir);
-  writeFileSync(join(dir, name), JSON.stringify(data, null, 2), "utf-8");
+  writeFileSync(join(dir, name), encryptJson(data), "utf-8");
 }
 
 /** 列出目录中满足谓词的文件名（自然排序） */

@@ -151,8 +151,8 @@ export function pickDailyQuestions(answered: AnswerSheet, perDay: number = QUEST
     .slice(0, perDay);
 }
 
-/** 根据完整画像生成「恭喜词」（6 天答完时弹出） */
-export function buildCongrats(profile: TemperamentProfile): string {
+/** 根据完整画像生成「恭喜词」（6 天答完 / 语言推断完成时弹出） */
+export function buildCongrats(profile: TemperamentProfile, source: "questionnaire" | "language" = "questionnaire"): string {
   const label = TYPE_LABELS[profile.primary];
   const byType: Record<TemperamentType, string> = {
     choleric: "你像一团火，热烈而直接。这份能量是你的天赋，记得也为它找一个方向。",
@@ -163,9 +163,12 @@ export function buildCongrats(profile: TemperamentProfile): string {
   const tail = profile.secondary
     ? `而${TYPE_LABELS[profile.secondary]}的那一面，也悄悄在你身上生长。`
     : "";
+  const intro =
+    source === "language"
+      ? "🎉 读罢你写下的字，我大概摸到了你说话的脾气。\n不答题、不勾选，你的文字本身就是答案。\n"
+      : "🎉 恭喜你完成气质探索！\n六天，六十题，你为自己按下了一枚温柔的印章。\n";
   return (
-    "🎉 恭喜你完成气质探索！\n" +
-    "六天，六十题，你为自己按下了一枚温柔的印章。\n" +
+    intro +
     `你的核心气质是——${label}。${byType[profile.primary]}${tail}\n` +
     "从今天起，三个角色会更懂你说话的方式。"
   );

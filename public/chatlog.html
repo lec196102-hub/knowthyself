@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Triune · 聊天日志</title>
+<title>老己 · 聊天日志</title>
 <style>
   :root{
     --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --border:#e6e9ef;
@@ -30,14 +30,29 @@
   .toolbar input{flex:1;min-width:220px;border:1px solid var(--border);border-radius:10px;
         padding:10px 13px;font-size:13px;color:var(--ink);background:var(--panel);font-family:inherit;}
   .toolbar input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);}
-  button{font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--panel);
-         color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:.15s;font-weight:500;}
-  button:hover{border-color:var(--muted-2);transform:translateY(-1px);}
-  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
-  button.primary:hover{filter:brightness(1.05);}
-  button.danger{color:#c0392b;border-color:#f0c5c0;background:#fff;}
-  button.danger:hover{background:#fdf2f0;}
-  button.mini{padding:5px 11px;font-size:12px;border-radius:7px;}
+
+  /* ===== 共享：双气泡胶囊按钮（与 widget/index/knowledge 风格一致） ===== */
+  .btn-bubble{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
+              font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;
+              border:1px solid rgba(55,138,221,.4);
+              background:linear-gradient(135deg,rgba(55,138,221,.1),rgba(127,119,221,.1));
+              color:#3a3340;text-decoration:none;transition:all .15s;}
+  .btn-bubble:hover{background:linear-gradient(135deg,rgba(55,138,221,.2),rgba(127,119,221,.2));
+                    border-color:rgba(55,138,221,.7);color:#1d4ed8;transform:translateY(-1px);
+                    box-shadow:0 6px 16px rgba(55,138,221,.18);}
+  .btn-bubble:active{transform:translateY(0);}
+  .btn-bubble:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(55,138,221,.3);}
+  .btn-bubble svg{flex-shrink:0;display:block;}
+  .btn-bubble.primary{background:linear-gradient(135deg,#1f6feb,#378ADD);
+                      border-color:rgba(255,255,255,.22);color:#fff;}
+  .btn-bubble.primary:hover{background:linear-gradient(135deg,#2878ff,#4793e5);color:#fff;
+                            box-shadow:0 6px 16px rgba(55,138,221,.4);}
+  .btn-bubble.ghost{background:rgba(40,30,60,.04);border-color:rgba(40,30,60,.14);color:#5b5566;}
+  .btn-bubble.ghost:hover{background:rgba(40,30,60,.1);color:#3a3340;box-shadow:none;}
+  .btn-bubble.danger{background:#fff;border-color:#f0c5c0;color:#c0392b;}
+  .btn-bubble.danger:hover{background:#fdf2f0;color:#a0261a;box-shadow:none;}
+  .btn-bubble.mini{padding:4px 10px;font-size:11.5px;}
+  .btn-bubble:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 
   .stat{font-size:12.5px;color:var(--muted);margin-top:14px;}
 
@@ -74,8 +89,8 @@
 <div class="wrap">
   <div class="topbar">
     <div>
-      <h1>聊天日志</h1>
-      <p>这里保存了你和三我的每一次对话。支持按关键词搜索，也可以删除单条或清空全部记录。</p>
+      <h1>老己 · 聊天日志</h1>
+      <p>这里保存了你和老己的每一次对话。支持按关键词搜索，也可以删除单条或清空全部记录。</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
       <span class="who" id="who">用户：default</span>
@@ -84,10 +99,16 @@
   </div>
 
   <div class="toolbar">
-    <input id="q" type="text" placeholder="搜索聊天记录…（你的消息、三我回复、争吵内容都能搜到）" />
-    <button class="primary" id="search-btn">搜索</button>
-    <button id="reset-btn">显示全部</button>
-    <button class="danger" id="clear-btn">清空全部记录</button>
+    <input id="q" type="text" placeholder="搜索聊天记录…（你的消息、老己回复、争吵内容都能搜到）" />
+    <button class="btn-bubble primary" id="search-btn">
+      <svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M16 16 L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      搜索
+    </button>
+    <button class="btn-bubble ghost" id="reset-btn">显示全部</button>
+    <button class="btn-bubble danger" id="clear-btn">清空全部记录</button>
   </div>
 
   <div class="stat" id="stat">加载中…</div>
@@ -141,7 +162,7 @@ async function load(q){
 function render(list){
   const box = document.getElementById("logs");
   if(list.length === 0){
-    box.innerHTML = '<div class="empty">' + (currentQ ? "没有找到匹配的记录" : "还没有聊天记录，去和三我聊聊吧") + '</div>';
+    box.innerHTML = '<div class="empty">' + (currentQ ? "没有找到匹配的记录" : "还没有聊天记录，去和老己聊聊吧") + '</div>';
     return;
   }
   box.innerHTML = "";
@@ -156,10 +177,10 @@ function render(list){
       '<div class="head">' +
         '<span class="dt">' + fmtDate(rec.timestamp) + (rec.debateCount ? ' · ⚡争吵 ' + rec.debateCount + ' 条' : '') + '</span>' +
         '<span class="spacer"></span>' +
-        '<button class="danger mini">删除</button>' +
+        '<button class="btn-bubble danger mini">删除</button>' +
       '</div>' +
       '<div class="user">' + hl(rec.diary, currentQ) + '</div>' +
-      (replies ? '<details' + (currentQ ? ' open' : '') + '><summary>三我的回复</summary>' + replies + '</details>' : '');
+      (replies ? '<details' + (currentQ ? ' open' : '') + '><summary>老己的回复</summary>' + replies + '</details>' : '');
     el.querySelector("button").addEventListener("click", ()=>delOne(rec.id, el));
     box.appendChild(el);
   });

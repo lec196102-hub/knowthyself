@@ -75,8 +75,9 @@
       var overlay = document.createElement("div");
       overlay.id = "onboarding-overlay";
       overlay.style.cssText =
-        "position:fixed;inset:0;background:#0d1117;color:#c9d1d9;overflow-y:auto;" +
-        "padding:24px 16px 90px;z-index:1000;font-family:system-ui,-apple-system,sans-serif;";
+        "position:fixed;inset:0;background:linear-gradient(135deg,#0d1117 0%,#13182a 60%,#0d1117 100%);" +
+        "color:#c9d1d9;overflow-y:auto;" +
+        "padding:32px 16px 100px;z-index:1000;font-family:system-ui,-apple-system,sans-serif;";
 
       var opts = [
         [1, "很符合"],
@@ -88,12 +89,16 @@
 
       var html = '<div style="max-width:720px;margin:0 auto;">';
       html +=
-        '<h2 style="color:#58a6ff;font-size:20px;margin-bottom:4px;">气质测试 · 今日 10 题</h2>';
-      html +=
-        '<p style="color:#8b949e;font-size:13px;margin-bottom:6px;">' + progressLine(t) + "</p>";
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">' +
+          '<img src="assets/laoji-logo.png" width="38" height="38" alt="老己">' +
+          '<div>' +
+            '<h2 style="color:#e6edf3;font-size:20px;margin:0 0 4px;font-weight:700;">气质测试 · 今日 10 题</h2>' +
+            '<div style="color:#8b949e;font-size:12.5px;">' + progressLine(t) + '</div>' +
+          '</div>' +
+        '</div>';
       html +=
         '<p style="color:#8b949e;font-size:13px;margin-bottom:18px;line-height:1.6;">' +
-        "凭第一感觉作答，每天只需 10 题，6 天答完以后三个角色会更贴合你。</p>";
+        "凭第一感觉作答，每天只需 10 题，6 天答完以后老己会更贴合你。</p>";
       html += '<div id="q-list">';
 
       (t.todayQuestions || []).forEach(function (q) {
@@ -115,14 +120,22 @@
       html += "</div>";
       html +=
         '<div style="position:fixed;left:0;right:0;bottom:0;background:#0d1117;' +
-        'padding:12px 0;text-align:center;border-top:1px solid #30363d;">' +
-        '<button id="submit-test" style="padding:10px 28px;background:#238636;color:#fff;' +
-        'border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer;">提交今日答题</button>' +
+        'padding:14px 0;text-align:center;border-top:1px solid #30363d;">' +
+        '<button id="submit-test" class="btn-bubble primary" style="padding:11px 26px;font-size:14px;">' +
+        '<svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '</svg>提交今日答题</button>' +
         '<div id="form-msg" style="color:#8b949e;font-size:12px;margin-top:8px;"></div>' +
-        '<div style="margin-top:8px;">' +
-        '<button id="later-btn" style="background:none;border:1px solid #30363d;color:#8b949e;' +
-        'padding:6px 16px;border-radius:16px;font-size:12px;cursor:pointer;">' +
-        (t.onboarded ? "稍后再说，先去聊天" : "先随便聊聊，稍后再测 🌱") + '</button></div>' +
+        '<div style="margin-top:10px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">' +
+        '<button id="later-btn" class="btn-bubble ghost" style="padding:7px 16px;font-size:12px;">' +
+        (t.onboarded ? "稍后再说，先去聊天" : "先随便聊聊，稍后再测 🌱") + '</button>' +
+        '<button id="import-alt-btn" class="btn-bubble" style="padding:7px 16px;font-size:12px;">' +
+        '<svg class="bubble-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+          '<rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="rgba(255,255,255,.18)" stroke="currentColor" stroke-width="1.6"/>' +
+          '<path d="M5.5 13.5 L5.5 16.5 L8.5 13.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,.18)"/>' +
+          '<rect x="9" y="10" width="13" height="11" rx="3" fill="rgba(255,255,255,.18)" stroke="currentColor" stroke-width="1.6"/>' +
+          '<path d="M15.5 21 L15.5 24 L18.5 21" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,.18)"/>' +
+        '</svg>导入旧日记测气质</button></div>' +
         "</div></div>";
 
       overlay.innerHTML = html;
@@ -134,6 +147,16 @@
           // 首启摩擦优化：始终允许跳过测试，先写一条、默认语气；气质测试作为轻引导
           enterChat(null, t.onboarded ? t.profile : null);
           resolve(true);
+        });
+      }
+
+      // 「导入旧日记测气质」——问卷的替代构建路径（FR-11）：贴旧日记 → 自动聚合推断画像
+      var importAlt = document.getElementById("import-alt-btn");
+      if (importAlt) {
+        importAlt.addEventListener("click", function () {
+          if (window.TriuneImport) {
+            window.TriuneImport.open({ onEntered: function () { resolve(true); } });
+          }
         });
       }
 
@@ -175,10 +198,12 @@
             msg.style.color = "#7ee787";
             msg.textContent = "今日已完成 🎉 还差 " + remain + " 题，明天再来～";
             var enter = document.createElement("button");
-            enter.textContent = "去聊天";
-            enter.style.cssText =
-              "margin-top:8px;padding:8px 22px;background:#238636;color:#fff;border:none;" +
-              "border-radius:20px;font-size:13px;cursor:pointer;";
+            enter.className = "btn-bubble primary";
+            enter.style.cssText = "margin-top:10px;padding:8px 22px;font-size:13px;";
+            enter.innerHTML =
+              '<svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+              '</svg>去聊天';
             enter.onclick = function () {
               enterChat(null, d.profile);
               resolve(true);
@@ -199,18 +224,22 @@
       overlay = document.createElement("div");
       overlay.id = "onboarding-overlay";
       overlay.style.cssText =
-        "position:fixed;inset:0;background:#0d1117;color:#c9d1d9;overflow-y:auto;" +
+        "position:fixed;inset:0;background:linear-gradient(135deg,#0d1117 0%,#13182a 60%,#0d1117 100%);" +
+        "color:#c9d1d9;overflow-y:auto;" +
         "padding:40px 16px;z-index:1000;font-family:system-ui,-apple-system,sans-serif;";
       document.body.appendChild(overlay);
     }
     overlay.innerHTML =
-      '<div style="max-width:640px;margin:8vh auto 0;background:#161b22;border:1px solid #30363d;' +
-      'border-radius:16px;padding:28px;text-align:center;white-space:pre-wrap;line-height:1.8;">' +
-      '<div style="font-size:40px;margin-bottom:12px;">🎉</div>' +
-      '<div style="font-size:15px;color:#c9d1d9;">' +
+      '<div style="max-width:640px;margin:8vh auto 0;background:#161b22;border:1px solid rgba(55,138,221,.4);' +
+      'border-radius:18px;padding:30px;text-align:center;white-space:pre-wrap;line-height:1.8;' +
+      'box-shadow:0 24px 80px rgba(0,0,0,.45),0 0 0 1px rgba(55,138,221,.1);">' +
+      '<img src="assets/laoji-logo.png" width="56" height="56" alt="老己" style="margin:0 auto 14px;display:block;">' +
+      '<div style="font-size:15px;color:#e6edf3;">' +
       esc(congrats || "恭喜你完成气质探索！").replace(/\n/g, "<br>") + "</div>" +
-      '<button id="enter-chat" style="margin-top:22px;padding:10px 28px;background:#238636;color:#fff;' +
-      'border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer;">进入聊天</button>' +
+      '<button id="enter-chat" class="btn-bubble primary" style="margin-top:22px;padding:11px 26px;font-size:14px;">' +
+      '<svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>进入聊天</button>' +
       "</div>";
     document.getElementById("enter-chat").addEventListener("click", function () {
       enterChat(congrats, profile);
@@ -222,18 +251,22 @@
     inputArea.style.display = "none";
     chat.innerHTML =
       '<div class="empty">今日气质测试已完成 🎉<br>还差 ' +
-      ((t.total || TOTAL) - (t.answered || 0)) + " 题，明天再来～<br>先去和三个角色聊聊吧。</div>";
+      ((t.total || TOTAL) - (t.answered || 0)) + " 题，明天再来～<br>先去和老己聊聊吧。</div>";
     var overlay = document.createElement("div");
     overlay.id = "onboarding-overlay";
     overlay.style.cssText =
-      "position:fixed;inset:0;background:rgba(13,17,23,0.96);color:#c9d1d9;z-index:1000;" +
+      "position:fixed;inset:0;background:linear-gradient(135deg,rgba(13,17,23,.96) 0%,rgba(19,24,42,.96) 60%,rgba(13,17,23,.96) 100%);" +
+      "color:#c9d1d9;z-index:1000;" +
       "display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
     overlay.innerHTML =
-      '<div style="background:#161b22;border:1px solid #30363d;border-radius:16px;padding:24px 28px;text-align:center;">' +
-      '<div style="font-size:28px;margin-bottom:10px;">✅</div>' +
-      '<div style="font-size:14px;color:#8b949e;margin-bottom:16px;">今日已答完，明天继续补全气质画像</div>' +
-      '<button id="enter-chat" style="padding:9px 26px;background:#238636;color:#fff;border:none;' +
-      'border-radius:20px;font-size:14px;cursor:pointer;">去聊天</button></div>';
+      '<div style="background:#161b22;border:1px solid rgba(55,138,221,.4);border-radius:18px;padding:26px 30px;text-align:center;' +
+      'box-shadow:0 24px 80px rgba(0,0,0,.45),0 0 0 1px rgba(55,138,221,.1);">' +
+      '<img src="assets/laoji-logo.png" width="48" height="48" alt="老己" style="margin:0 auto 12px;display:block;">' +
+      '<div style="font-size:14px;color:#c9d1d9;margin-bottom:18px;">今日已答完，明天继续补全气质画像</div>' +
+      '<button id="enter-chat" class="btn-bubble primary" style="padding:11px 26px;font-size:14px;">' +
+      '<svg class="bubble-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+        '<path d="M5 12h12M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg>去聊天</button></div>';
     document.body.appendChild(overlay);
     document.getElementById("enter-chat").addEventListener("click", function () {
       enterChat(null, t.profile);

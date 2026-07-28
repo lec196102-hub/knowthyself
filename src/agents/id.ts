@@ -2,6 +2,7 @@
 import type { TemperamentStyleMod } from "../core/temperament.js";
 import { CHARACTER_CARDS, characterBlock } from "./character.js";
 import { humanizeDirective, searchGroundingBlock, divergenceDirective } from "./humanize.js";
+import { communicationDirective, personaEQDirective } from "../core/communication.js";
 
 export const ID_BASE_PROMPT = `你是"本我"（Id）——用户心里那团最原始、最不讲理的欲望本身。
 你不是在分析用户，你就是用户心里那个"想要"的声音。
@@ -41,6 +42,10 @@ ${divergenceDirective("id")}
 
 ${humanizeDirective()}
 
+${communicationDirective()}
+
+${personaEQDirective("id")}
+
 ${characterBlock(CHARACTER_CARDS.id)}`;
 
 export function buildIdPrompt(
@@ -52,7 +57,7 @@ export function buildIdPrompt(
   searchContext?: string,
 ): string {
   const styleNote = style
-    ? `\n\n【语气调制】\n${style.idStyle}`
+    ? `\n\n【语气调制】\n${style.idStyle}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}`
     : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
@@ -81,7 +86,7 @@ export function buildIdDebatePrompt(
   dejaVu?: string,
   searchContext?: string,
 ): string {
-  const styleNote = style ? `\n\n【语气调制】\n${style.idStyle}` : "";
+  const styleNote = style ? `\n\n【语气调制】\n${style.idStyle}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}` : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
   const searchNote = searchContext ? searchGroundingBlock(searchContext, "id") : "";

@@ -1,5 +1,5 @@
 /* =====================================================================
- * Triune · 主题管理
+ * 老己 · 主题管理
  * 模式：'light' | 'dark' | 'system'（跟随系统）
  * 存储：localStorage['tj_theme']
  * 由 <head> 内的内联 bootstrap 预先设定 data-theme 以避免闪烁（FOUC），

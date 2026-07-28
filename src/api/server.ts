@@ -17,9 +17,13 @@ import { createJournalRouter } from "./routes/journal.js";
 import { createTemperamentRouter } from "./routes/temperament.js";
 import { createKnowledgeRouter } from "./routes/knowledge.js";
 import { createStaticRouter } from "./routes/static.js";
+import { installSecurity } from "./security.js";
 
 const app = express();
 app.use(express.json({ limit: "1mb" }));
+
+// 信息安全防火墙：仅本地访问 + 安全响应头（阻断局域网拖库 / 外源注入）
+installSecurity(app, env.PORT);
 
 const engine = new TriuneEngine();
 
@@ -29,12 +33,12 @@ app.use("/api/temperament", createTemperamentRouter(engine));
 app.use("/api/knowledge", createKnowledgeRouter(engine));
 app.use("/", createStaticRouter(engine));
 
-app.listen(env.PORT, () => {
+app.listen(env.PORT, "127.0.0.1", () => {
   console.log(`\n🔮 Triune Journal 已启动`);
-  console.log(`   端口: ${env.PORT}`);
+  console.log(`   端口: ${env.PORT}（仅绑定 127.0.0.1，禁止局域网访问）`);
   console.log(`   模型: ${env.LLM_MODEL}`);
-  console.log(`   日记目录: ${process.cwd()}/data/journals`);
-  console.log(`   气质画像目录: ${process.cwd()}/data/profiles`);
+  console.log(`   日记目录: ${process.cwd()}/data/journals（已 AES-256-GCM 加密落盘）`);
+  console.log(`   气质画像目录: ${process.cwd()}/data/profiles（已加密落盘）`);
   console.log(`   API文档: http://localhost:${env.PORT}/api/health\n`);
 });
 

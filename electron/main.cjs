@@ -1,4 +1,8 @@
 ﻿// Triune Journal · 桌宠悬浮窗 · Electron 主进程
+// 0) 防御性：清掉 ELECTRON_RUN_AS_NODE —— 父进程若把它设上（VSCode 终端/Codebuddy 嵌套等），
+//    electron.exe 会以纯 Node 模式启动、require('electron') 返回字符串、主进程没法建窗。
+//    必须在 require('electron') 之前删除，否则 const { app } 解构出的就是 undefined。
+delete process.env.ELECTRON_RUN_AS_NODE;
 const { app, BrowserWindow, globalShortcut, Tray, Menu, nativeImage, ipcMain } = require("electron");
 const path = require("path");
 const net = require("net");
@@ -8,6 +12,22 @@ const { pathToFileURL } = require("url");
 const WIDTH = 380;
 const HEIGHT = 520;
 const PORT = process.env.PORT || 3000;
+
+// ============ 静默启动：消除 Chromium 的 user-data / GPU 磁盘缓存告警 ============
+// 最终产品是常驻托盘的桌宠，不应让任何 chromium 内部告警（cache_util_win / disk_cache /
+// gpu_disk_cache）显示到用户面前。
+// 1) 默认 user-data 落在 %APPDATA%\Triune 陪伴，在 OneDrive 目录 / 权限收紧的机器上
+//    会被拒写（0x5 ERROR_ACCESS_DENIED）—— 显式改到 %TEMP%\triune-journal 即可写。
+app.setPath("userData", path.join(app.getPath("temp"), "triune-journal"));
+// 2) 关闭 GPU 加速 —— 文字聊天窗用不到硬件渲染，且能从源头消除 gpu_disk_cache 告警。
+app.commandLine.appendSwitch("disable-gpu");
+app.commandLine.appendSwitch("disable-software-rasterizer");
+app.commandLine.appendSwitch("disable-gpu-compositing");
+app.commandLine.appendSwitch("disable-gpu-rasterization");
+// 3) 关闭磁盘缓存 —— 进一步压制 disk_cache / gpu_disk_cache 残留告警。
+app.commandLine.appendSwitch("disable-gpu-disk-cache");
+app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+app.commandLine.appendSwitch("disk-cache-size", "1");
 
 let win = null;
 let tray = null;

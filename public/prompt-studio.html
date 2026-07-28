@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Triune 提示词制作台</title>
+<title>老己 · 提示词制作台</title>
 <style>
   :root{
     --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --border:#e6e9ef;
@@ -23,8 +23,7 @@
   .side{background:linear-gradient(180deg,#11151c,#171c26);color:#e8ecf3;padding:22px 16px;
         display:flex;flex-direction:column;gap:8px;}
   .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 16px;}
-  .brand .dot{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#22d3ee);
-             display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .brand .dot{width:30px;height:30px;border-radius:7px;display:block;}
   .brand b{font-size:15px;font-weight:600;letter-spacing:.3px;}
   .brand small{display:block;font-size:11px;color:#9aa3b2;font-weight:400;margin-top:1px;}
   .nav-label{font-size:11px;color:#7c8597;padding:6px 10px;letter-spacing:.5px;}
@@ -143,8 +142,8 @@
   <!-- 侧边栏 -->
   <aside class="side">
     <div class="brand">
-      <div class="dot">◈</div>
-      <div><b>Triune Studio</b><small>三我提示词制作台</small></div>
+      <img class="dot" src="assets/laoji-logo.png" width="30" height="30" alt="老己">
+      <div><b>老己 Studio</b><small>提示词制作台</small></div>
     </div>
     <div class="nav-label">角色 AGENTS</div>
     <div class="agent" data-k="id"><div class="avatar" style="background:#2563eb">本</div>
@@ -157,7 +156,7 @@
     <div class="agent" id="nav-sim" data-k="sim"
          style="background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.32);">
       <div class="avatar" style="background:linear-gradient(135deg,#6366f1,#22d3ee)">▶</div>
-      <div class="meta"><b>聊天模拟</b><span>真实调用三我引擎</span></div>
+      <div class="meta"><b>聊天模拟</b><span>真实调用老己引擎</span></div>
     </div>
     <div class="side-foot">
       编辑各组件后，右侧实时组装 system prompt。<br>
@@ -172,7 +171,7 @@
     <div class="topbar">
       <div>
         <h1>提示词制作台</h1>
-        <p>可视化编辑三我系统提示词 · 实时预览 · 一键导出</p>
+        <p>可视化编辑老己的系统提示词 · 实时预览 · 一键导出</p>
       </div>
       <div class="pill" id="pill">本我 · 已就绪</div>
     </div>
@@ -254,7 +253,7 @@
       <div class="topbar">
         <div>
           <h1>真实聊天模拟器</h1>
-          <p>调用本地三我引擎（deepseek-chat）· 真实语气 · 真实安全过滤 · 与制作台编辑相互独立</p>
+          <p>调用本地老己引擎（deepseek-chat）· 真实语气 · 真实安全过滤 · 与制作台编辑相互独立</p>
         </div>
         <div class="pill" id="sim-status">未解锁 · 首次聊天自动测试人格</div>
       </div>
@@ -262,7 +261,7 @@
         <div class="card sim-card">
           <div class="card-b">
             <div class="chatwin" id="chatwin">
-              <div class="sim-empty" id="sim-empty">在下方输入你的想法，三我会分别回应你。<br>首次发送会自动用一套测试人格解锁对话。</div>
+              <div class="sim-empty" id="sim-empty">在下方输入你的想法，老己会分别回应你。<br>首次发送会自动用一套测试人格解锁对话。</div>
             </div>
           </div>
           <div class="sim-input">
@@ -470,7 +469,7 @@ function render(){
   $("code").textContent = genTs(current);
   renderPersona(a);
   const chars = txt.length, lines = txt.split("\n").length;
-  $("stat").textContent = "组装长度 " + chars + " 字符 · " + lines + " 行 · 三我共用 ETHICS_CLAUSE 与 characterBlock";
+  $("stat").textContent = "组装长度 " + chars + " 字符 · " + lines + " 行 · 老己共用 ETHICS_CLAUSE 与 characterBlock";
 }
 
 function toast(msg){
@@ -574,7 +573,7 @@ async function sendSim(){
 
   simBusy = true;
   const typing = document.createElement("div");
-  typing.className = "typing"; typing.id = "typing"; typing.textContent = "三我正在回应…";
+  typing.className = "typing"; typing.id = "typing"; typing.textContent = "老己正在回应…";
   $("chatwin").appendChild(typing);
 
   try{

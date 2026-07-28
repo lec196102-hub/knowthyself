@@ -18,6 +18,12 @@ export interface JournalRecord {
   diary: string;
   hasTemperamentProfile: boolean;
   responses: unknown;
+  /** 由「导入历史日记」入口写入（区别于正常日记），用于区分来源 */
+  imported?: boolean;
+  /** 导入时的原始日期（用户提供的 YYYY-MM-DD / ISO），用于还原时间线 */
+  originalDate?: string;
+  /** 导入操作发生的时间 ISO */
+  importedAt?: string;
 }
 
 /** 获取日记存储目录（已确保存在） */
@@ -25,9 +31,15 @@ export function getJournalDir(): string {
   return journalDir;
 }
 
-/** 保存一条日记，返回写入的文件路径 */
-export function saveJournal(record: JournalRecord, userId: string): string {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+/** 保存一条日记，返回写入的文件路径
+ * @param timestampOverride 可选，覆盖文件名里的时间戳（用于导入历史日记时保留原始日期排序）
+ */
+export function saveJournal(
+  record: JournalRecord,
+  userId: string,
+  timestampOverride?: string,
+): string {
+  const timestamp = (timestampOverride || new Date().toISOString()).replace(/[:.]/g, "-");
   const name = `${userId}-${timestamp}.json`;
   writeJsonFile(journalDir, name, record);
   return `${journalDir}/${name}`;
@@ -90,4 +102,41 @@ export function deleteAllJournals(userId: string): number {
     if (deleteFile(journalDir, f)) n++;
   }
   return n;
+}
+
+// ==================== 历史聚合（用于语言推断画像） ====================
+
+/** 聚合选项 */
+export interface DiaryCollectOpts {
+  /** 单条文本最小长度，低于此值视为无效样本 */
+  minLen?: number;
+  /** 最多返回多少条（防止一次推断 token 膨胀） */
+  max?: number;
+}
+
+/**
+ * 聚合某用户全部历史日记的正文，作为「语言推断气质画像」的样本。
+ * - 按旧→新顺序读取（listJournalEntries 是新→旧，这里反转）
+ * - 去重（同一用户内正文大小写不敏感去重）
+ * - 跳过过短 / 空文本
+ * - 限制返回条数（默认 30，与 /infer 上限一致）
+ */
+export function collectDiaryTexts(userId: string, opts: DiaryCollectOpts = {}): string[] {
+  const minLen = opts.minLen ?? 8;
+  const max = opts.max ?? 30;
+
+  const entries = listJournalEntries(userId).reverse(); // 旧→新
+  const seen = new Set<string>();
+  const out: string[] = [];
+
+  for (const e of entries) {
+    const text = (e.record?.diary || "").trim();
+    if (text.length < minLen) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+    if (out.length >= max) break;
+  }
+  return out;
 }

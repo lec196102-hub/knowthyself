@@ -19,16 +19,19 @@ import { ensureDir, readJsonFile, writeJsonFile } from "./adapter.js";
 
 const profilesDir = ensureDir("./data/profiles");
 
-/** 气质画像记录结构（兼容渐进式每日测试） */
+/** 画像来源：问卷 / 用户语言推断 */
+export type ProfileSource = "questionnaire" | "language";
+
+/** 气质画像记录结构（兼容渐进式每日测试 + 语言推断两种来源） */
 export interface ProfileRecord {
   userId: string;
-  /** 累积已答题：题号 → 选项(1-5) */
+  /** 累积已答题：题号 → 选项(1-5)。语言来源时可为空对象 */
   answers: AnswerSheet;
   /** 至少完成首日一批（>=10 题），可解锁聊天 */
   onboarded: boolean;
-  /** 已答满全部 60 题 */
+  /** 已答满全部 60 题 / 已完成语言推断 */
   completed: boolean;
-  /** 完整画像（仅 completed 时有值） */
+  /** 完整画像（问卷答满 或 语言推断成功 时有值） */
   profile?: TemperamentProfile;
   /** 上次答题日期 YYYY-MM-DD（用于「每天不重复」） */
   lastDailyDate?: string;
@@ -36,6 +39,14 @@ export interface ProfileRecord {
   completedAt?: string;
   /** 完成时生成的恭喜词 */
   congrats?: string;
+  /** 画像来源（问卷 / 语言推断）。缺省视为 questionnaire，保持向后兼容 */
+  source?: ProfileSource;
+  /** 语言来源时：用于推断的原始文本样本（截断保存，避免无限膨胀） */
+  languageSamples?: string[];
+  /** 语言来源时：推断时间 ISO */
+  inferredAt?: string;
+  /** 语言来源时：推断依据说明（透明可溯） */
+  basis?: string;
 }
 
 /** 获取气质画像存储目录（已确保存在） */

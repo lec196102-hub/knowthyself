@@ -11,11 +11,13 @@
 import { Router, type Request, type Response } from "express";
 import { TriuneEngine } from "../../core/triune.js";
 import { saveProfile, loadProfile } from "../../storage/profile-store.js";
+import { collectDiaryTexts } from "../../storage/journal-store.js";
 import {
   calculateScores,
   determineProfile,
   pickDailyQuestions,
   buildCongrats,
+  getStyleModulation,
   TOTAL_QUESTIONS,
   QUESTIONS_PER_DAY,
 } from "../../core/temperament.js";
@@ -195,6 +197,71 @@ export function createTemperamentRouter(engine: TriuneEngine): Router {
         data: profile,
         congrats,
         savedTo,
+      });
+    } catch (error: any) {
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  /** POST /api/temperament/infer - 用用户语言（日记/随笔）推断气质画像
+   *  支持两种样本来源：
+   *   - 显式文本：texts 数组 或 text 字符串
+   *   - 历史聚合：fromHistory=true 时，自动拉取该用户全部历史日记作为样本
+   */
+  router.post("/infer", async (req: Request, res: Response) => {
+    try {
+      const { userId = "default", texts, text, fromHistory = false } = req.body || {};
+
+      // 收集文本样本：支持 texts 数组 或 单个 text（按换行切分）
+      const collected: string[] = [];
+      if (Array.isArray(texts)) {
+        for (const t of texts) if (typeof t === "string" && t.trim()) collected.push(t.trim());
+      }
+      if (typeof text === "string" && text.trim()) {
+        for (const line of text.split(/\n+/)) if (line.trim()) collected.push(line.trim());
+      }
+
+      // 无显式文本时，尝试聚合该用户的历史日记作为样本
+      if (collected.length === 0 && fromHistory) {
+        collected.push(...collectDiaryTexts(userId));
+      }
+
+      if (collected.length === 0) {
+        return res.status(400).json({
+          error: "请提供用于推断的文本（texts/text），或传 fromHistory:true 以聚合该用户的历史日记。",
+        });
+      }
+
+      // 体量限制：每篇 ≤ 2000 字，最多 30 篇，总 ≤ 6000 字（防 token 膨胀）
+      const trimmed = collected
+        .map((t) => t.slice(0, 2000))
+        .slice(0, 30);
+      const totalLen = trimmed.join("").length;
+      if (totalLen < 20) {
+        return res.status(400).json({ error: "文本太少，无法推断气质。请多写几句（≥20 字）。" });
+      }
+      if (totalLen > 6000) {
+        return res.status(400).json({ error: "文本过长，单次上限 6000 字。" });
+      }
+
+      // 复用引擎方法：推断 + 落盘（ language 来源）+ 返回结果
+      const { scores, profile, basis, method, congrats, savedTo } = await engine.inferAndSaveProfile(
+        userId,
+        trimmed,
+      );
+
+      return res.json({
+        success: true,
+        method, // "llm" | "heuristic"，前端可据此提示「这是估算」
+        basis: basis || undefined,
+        savedTo,
+        sampleCount: trimmed.length,
+        data: {
+          scores,
+          profile,
+          style: getStyleModulation(profile),
+          congrats,
+        },
       });
     } catch (error: any) {
       return res.status(500).json({ success: false, error: error.message });

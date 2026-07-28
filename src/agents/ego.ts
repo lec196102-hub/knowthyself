@@ -2,6 +2,7 @@
 import type { TemperamentStyleMod } from "../core/temperament.js";
 import { CHARACTER_CARDS, characterBlock } from "./character.js";
 import { humanizeDirective, searchGroundingBlock, divergenceDirective } from "./humanize.js";
+import { communicationDirective, personaEQDirective } from "../core/communication.js";
 
 export const EGO_BASE_PROMPT = `你是"自我"（Ego）——用户心里最后拍板的那个"老大"。本我和超我吵归吵，最后听你的。
 你在原始冲动（本我）和道德理想（超我）之间做裁决，再结合事实与用户的真实处境，给出最中肯、最现实、最切合这个用户的答案或建议。
@@ -26,6 +27,10 @@ ${divergenceDirective("ego")}
 
 ${humanizeDirective()}
 
+${communicationDirective()}
+
+${personaEQDirective("ego")}
+
 ${characterBlock(CHARACTER_CARDS.ego)}`;
 
 export function buildEgoPrompt(
@@ -38,7 +43,7 @@ export function buildEgoPrompt(
   searchContext?: string,
 ): string {
   const styleNote = style
-    ? `\n\n【回应策略调制】\n${style.egoTactic}`
+    ? `\n\n【回应策略调制】\n${style.egoTactic}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}`
     : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
@@ -85,7 +90,7 @@ export function buildEgoFinalPrompt(
   dejaVu?: string,
   searchContext?: string,
 ): string {
-  const styleNote = style ? `\n\n【回应策略调制】\n${style.egoTactic}` : "";
+  const styleNote = style ? `\n\n【回应策略调制】\n${style.egoTactic}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}` : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
   const searchNote = searchContext ? searchGroundingBlock(searchContext) : "";

@@ -32,5 +32,6 @@ if errorlevel 1 (
 )
 
 REM 3) Launch the Electron widget (tray-resident)
+REM    静默拉起：start /min 隐藏黑窗口；输出落到 logs\widget.log，开发者可查、用户看不见。
 echo Backend ready. Launching companion window...
-npm run widget
+start "Triune Widget" /min "launch-widget.cmd"

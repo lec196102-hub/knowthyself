@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Triune Journal · 陪伴</title>
+  <title>老己 · 陪伴</title>
   <script>
     (function(){try{var m=localStorage.getItem('tj_theme')||'system';var t=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;document.documentElement.dataset.theme=t;}catch(e){}})();
   </script>
@@ -25,22 +25,13 @@
       display: flex; align-items: center; gap: 12px;
     }
     .brand {
-      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
-      background: linear-gradient(135deg, #378ADD, #7F77DD); color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 15px; box-shadow: 0 4px 14px rgba(55, 138, 221, 0.4);
-      animation: brandGlow 4s ease-in-out infinite;
+      width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+      display: block;
+      box-shadow: 0 3px 10px rgba(0,0,0,.35);
     }
-    @keyframes brandGlow { 0%,100% { box-shadow: 0 4px 14px rgba(55,138,221,.4); } 50% { box-shadow: 0 4px 22px rgba(127,119,221,.6); } }
-    .header .title { font-size: 16px; font-weight: 600; color: var(--text); }
+    .header .title { font-size: 17px; font-weight: 700; color: var(--text); letter-spacing: 1px; }
     .header .sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
     .members { margin-left: auto; display: flex; gap: 8px; align-items: center; }
-    .navbtn {
-      font-size: 12px; color: var(--name); text-decoration: none; padding: 5px 10px;
-      border: 1px solid var(--nav-border); border-radius: 8px; transition: .15s;
-      background: var(--surface-2); white-space: nowrap;
-    }
-    .navbtn:hover { border-color: #58a6ff; color: #58a6ff; }
     .members .chip {
       display: flex; align-items: center; gap: 5px; font-size: 12px;
       padding: 4px 10px; border-radius: 20px; background: var(--surface-2);
@@ -72,17 +63,8 @@
     .msg-superego .av { background: #d2a8ff; } .msg-superego .nm { color: #d2a8ff; }
 
     /* 单一「在听」指示，取代三条思考过程 */
-    .thinking {
-      align-self: flex-start; background: var(--surface-2);
-      border: 1px solid var(--border); border-radius: 16px; border-bottom-left-radius: 5px;
-      padding: 11px 15px; display: flex; align-items: center; gap: 10px;
-      font-size: 12.5px; color: var(--muted);
-    }
-    .thinking .dots { display: flex; gap: 4px; }
-    .thinking .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
-    .thinking .dots i:nth-child(2) { animation-delay: .2s; }
-    .thinking .dots i:nth-child(3) { animation-delay: .4s; }
-    @keyframes blink { 0%, 60%, 100% { opacity: .25; } 30% { opacity: 1; } }
+    /* 思考中元素保留作占位，但不渲染任何可见内容（桌宠同款；web 仅做开发体验） */
+    .thinking { display: none; }
 
     .empty { color: var(--muted-2); text-align: center; padding: 70px 20px; font-size: 14px; line-height: 1.8; margin: auto; }
     .empty .orb {
@@ -135,17 +117,38 @@
 </head>
 <body>
   <div class="header">
-    <div class="brand">◈</div>
+    <img class="brand" src="assets/laoji-logo.png" width="36" height="36" alt="老己">
     <div>
-      <div class="title">Triune Journal</div>
+      <div class="title">老己</div>
       <div class="sub">本我 · 自我 · 超我，三位一体的陪伴</div>
     </div>
     <div class="members">
       <span class="chip m-id"><span class="dot"></span>本我</span>
       <span class="chip m-ego"><span class="dot"></span>自我</span>
       <span class="chip m-sp"><span class="dot"></span>超我</span>
-      <a class="navbtn" href="/knowledge.html" target="_blank" title="三我知识库">📚 知识库</a>
-      <a class="navbtn" href="/chatlog.html" target="_blank" title="聊天日志：搜索 / 删除聊天记录">🗒 聊天日志</a>
+      <a class="btn-bubble" href="/knowledge.html" target="_blank" title="知识库">
+        <svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4.5h6a3 3 0 0 1 3 3v13M20 4.5h-6a3 3 0 0 0-3 3v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 4.5v13h6a3 3 0 0 1 3 3M20 4.5v13h-6a3 3 0 0 0-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        知识库
+      </a>
+      <a class="btn-bubble" href="/chatlog.html" target="_blank" title="聊天日志：搜索 / 删除聊天记录">
+        <svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4.5" y="3" width="15" height="18" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        聊天日志
+      </a>
+      <a class="btn-bubble" href="javascript:void(0)" onclick="TriuneImport && TriuneImport.open()" title="导入旧日记，自动生成气质画像">
+        <svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1.5" y="2.5" width="13" height="11" rx="3" fill="rgba(255,255,255,.18)" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M5.5 13.5 L5.5 16.5 L8.5 13.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,.18)"/>
+          <rect x="9" y="10" width="13" height="11" rx="3" fill="rgba(255,255,255,.18)" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M15.5 21 L15.5 24 L18.5 21" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="rgba(255,255,255,.18)"/>
+        </svg>
+        导入旧日记
+      </a>
       <div class="theme-seg">
         <button class="topt" data-theme-opt="light" onclick="TriuneTheme.set('light')" title="浅色">浅</button>
         <button class="topt" data-theme-opt="dark" onclick="TriuneTheme.set('dark')" title="深色">深</button>
@@ -269,7 +272,7 @@ async function send() {
 function showThinking(chat) {
   const el = document.createElement("div");
   el.className = "thinking";
-  el.innerHTML = `<span>正在生成回复…</span><span class="dots"><i></i><i></i><i></i></span>`;
+  el.innerHTML = "";
   chat.appendChild(el);
   return el;
 }
@@ -293,6 +296,7 @@ function scrollBottom(el) { el.scrollTop = el.scrollHeight; }
 function esc(s) { return (s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 </script>
 <script src="/theme.js"></script>
+<script src="/import-diary.js"></script>
 <script src="/onboarding.js"></script>
 </body>
 </html>

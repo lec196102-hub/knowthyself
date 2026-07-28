@@ -11,3 +11,4 @@
 export * from "./temperament/questions.js";
 export * from "./temperament/scoring.js";
 export * from "./temperament/profile.js";
+export * from "./temperament/infer.js";

@@ -11,6 +11,7 @@ import {
   type TemperamentProfile,
   type TemperamentType,
 } from "./questions.js";
+import { buildCommStyle } from "../communication.js";
 
 /**
  * 气质风格调制参数
@@ -25,6 +26,8 @@ export interface TemperamentStyleMod {
   egoTactic: string;
   /** 超我的引导角度 */
   superegoAngle: string;
+  /** 这个用户爱听什么话（沟通适配，由四气质驱动） */
+  commStyle: string;
 }
 
 /** 根据气质画像生成三个 Agent 的风格调制 */
@@ -38,8 +41,8 @@ export function getStyleModulation(profile: TemperamentProfile): TemperamentStyl
     return 0;
   };
 
-  // 四个维度的描述标签
-  const mods: Record<TemperamentType, TemperamentStyleMod> = {
+  // 四个维度的描述标签（不含 commStyle——沟通适配由 buildCommStyle 单独计算）
+  const mods: Record<TemperamentType, { idStyle: string; egoTactic: string; superegoAngle: string }> = {
     choleric: {
       idStyle:
         "你的语气应该热烈、直白、有爆发力。像一团火焰——不加掩饰地燃烧。" +
@@ -109,5 +112,6 @@ export function getStyleModulation(profile: TemperamentProfile): TemperamentStyl
     idStyle: blend("idStyle"),
     egoTactic: blend("egoTactic"),
     superegoAngle: blend("superegoAngle"),
+    commStyle: buildCommStyle(profile),
   };
 }

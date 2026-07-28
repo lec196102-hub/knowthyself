@@ -1,8 +1,14 @@
 /* =====================================================================
- * Triune · 主题变量
+ * 老己 · 主题变量
  * 深色为默认（:root），浅色通过 <html data-theme="light"> 覆盖。
  * 各页面只需把颜色字面量写成 var(--xxx)，即可随主题切换。
  * 主题状态由 theme.js 管理（localStorage: tj_theme = light/dark/system）。
+ *
+ * 共享组件类（品牌统一）：
+ *   .btn-bubble         —— 圆角胶囊按钮 + 蓝紫渐变背景（参考双气泡图标按钮风格）
+ *   .btn-bubble.primary—— 主操作（实色填充，白字）
+ *   .bubble-icon        —— 双气泡对话 SVG 容器（24x24 / 28x28 / 等）
+ * 各页 HTML 内联 <svg class="bubble-icon"> 即可。
  * ===================================================================== */
 
 :root {
@@ -101,3 +107,87 @@
     transition-duration: .001ms !important;
   }
 }
+
+/* ===== 共享：双气泡胶囊按钮（参考「对话气泡」品牌图标） ===== */
+.btn-bubble {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px 5px 9px;
+  background: linear-gradient(135deg, rgba(55,138,221,.16), rgba(127,119,221,.16));
+  border: 1px solid rgba(55,138,221,.42);
+  border-radius: 999px;
+  color: var(--name);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s, transform .15s, box-shadow .15s, color .15s;
+}
+.btn-bubble:hover {
+  background: linear-gradient(135deg, rgba(55,138,221,.3), rgba(127,119,221,.3));
+  border-color: rgba(55,138,221,.7);
+  color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(55,138,221,.2);
+}
+.btn-bubble:active { transform: translateY(0); }
+.btn-bubble:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(55,138,221,.35);
+}
+.btn-bubble svg { flex-shrink: 0; display: block; }
+.btn-bubble.primary {
+  background: linear-gradient(135deg, #1f6feb, #378ADD);
+  border-color: rgba(255,255,255,.22);
+  color: #fff;
+}
+.btn-bubble.primary:hover {
+  background: linear-gradient(135deg, #2878ff, #4793e5);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(55,138,221,.4);
+}
+.btn-bubble.ghost {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+}
+.btn-bubble.ghost:hover {
+  background: var(--btn-ghost-hover);
+  border-color: var(--border);
+  color: var(--text);
+  box-shadow: none;
+}
+.btn-bubble.danger {
+  background: linear-gradient(135deg, rgba(248,81,73,.15), rgba(248,81,73,.1));
+  border-color: rgba(248,81,73,.45);
+  color: #ffc9c9;
+}
+.btn-bubble.danger:hover {
+  background: rgba(248,81,73,.28);
+  border-color: rgba(248,81,73,.7);
+  color: #fff;
+}
+
+/* 浅色主题下胶囊按钮的配色微调 */
+:root[data-theme="light"] .btn-bubble {
+  background: linear-gradient(135deg, rgba(55,138,221,.1), rgba(127,119,221,.1));
+  border-color: rgba(55,138,221,.4);
+  color: #3a3340;
+}
+:root[data-theme="light"] .btn-bubble:hover {
+  background: linear-gradient(135deg, rgba(55,138,221,.2), rgba(127,119,221,.2));
+  border-color: rgba(55,138,221,.7);
+  color: #1d4ed8;
+}
+:root[data-theme="light"] .btn-bubble.ghost {
+  background: rgba(40,30,60,.04);
+  border-color: rgba(40,30,60,.14);
+  color: #5b5566;
+}
+:root[data-theme="light"] .btn-bubble.ghost:hover {
+  background: rgba(40,30,60,.1);
+  color: #3a3340;
+}
+
+/* 气泡图标容器：统一 SVG 渲染尺寸 */
+.bubble-icon { display: block; flex-shrink: 0; }

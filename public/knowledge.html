@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Triune · 三我知识库</title>
+<title>老己 · 知识库</title>
 <style>
   :root{
     --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --border:#e6e9ef;
@@ -47,14 +47,27 @@
   .styles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
   @media(max-width:760px){.styles{grid-template-columns:1fr;}}
 
-  button{font-family:inherit;font-size:13px;border:1px solid var(--border);background:var(--panel);
-         color:var(--ink);padding:9px 16px;border-radius:9px;cursor:pointer;transition:.15s;font-weight:500;}
-  button:hover{border-color:var(--muted-2);transform:translateY(-1px);}
-  button.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
-  button.primary:hover{filter:brightness(1.05);}
-  button.danger{color:#c0392b;border-color:#f0c5c0;background:#fff;}
-  button.danger:hover{background:#fdf2f0;}
-  button:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  /* ===== 共享：双气泡胶囊按钮（与 widget/index 风格一致） ===== */
+  .btn-bubble{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;
+              font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;
+              border:1px solid rgba(55,138,221,.4);
+              background:linear-gradient(135deg,rgba(55,138,221,.1),rgba(127,119,221,.1));
+              color:#3a3340;text-decoration:none;transition:all .15s;}
+  .btn-bubble:hover{background:linear-gradient(135deg,rgba(55,138,221,.2),rgba(127,119,221,.2));
+                    border-color:rgba(55,138,221,.7);color:#1d4ed8;transform:translateY(-1px);
+                    box-shadow:0 6px 16px rgba(55,138,221,.18);}
+  .btn-bubble:active{transform:translateY(0);}
+  .btn-bubble:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(55,138,221,.3);}
+  .btn-bubble svg{flex-shrink:0;display:block;}
+  .btn-bubble.primary{background:linear-gradient(135deg,#1f6feb,#378ADD);
+                      border-color:rgba(255,255,255,.22);color:#fff;}
+  .btn-bubble.primary:hover{background:linear-gradient(135deg,#2878ff,#4793e5);color:#fff;
+                            box-shadow:0 6px 16px rgba(55,138,221,.4);}
+  .btn-bubble.ghost{background:rgba(40,30,60,.04);border-color:rgba(40,30,60,.14);color:#5b5566;}
+  .btn-bubble.ghost:hover{background:rgba(40,30,60,.1);color:#3a3340;box-shadow:none;}
+  .btn-bubble.danger{background:#fff;border-color:#f0c5c0;color:#c0392b;}
+  .btn-bubble.danger:hover{background:#fdf2f0;color:#a0261a;box-shadow:none;}
+  .btn-bubble:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 
   .docs{display:flex;flex-direction:column;gap:10px;}
   .doc{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);
@@ -89,9 +102,9 @@
 <div class="wrap">
   <div class="topbar">
     <div>
-      <h1>三我知识库 · 人格塑造台</h1>
+      <h1>老己 · 知识库</h1>
       <p>上传你的日记 / 笔记 / 经历，构建专属知识库；并分别为本我、自我、超我设定语气与风格。<br>
-         这些信息会被提炼成「用户画像」，让三我更懂你、更像你想要的陪伴方式。</p>
+         这些信息会被提炼成「用户画像」，让老己更懂你、更像你想要的陪伴方式。</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
       <span class="who" id="who">用户：default</span>
@@ -103,13 +116,13 @@
   <div class="card">
     <div class="card-h"><h3>当前用户画像简报</h3><span class="tag" id="brief-tag">尚未生成</span></div>
     <div class="card-b">
-      <div class="brief" id="brief"><span class="ph">上传内容后，系统会自动提炼一份「用户画像简报」并注入三我回应。</span></div>
+      <div class="brief" id="brief"><span class="ph">上传内容后，系统会自动提炼一份「用户画像简报」并注入老己回应。</span></div>
     </div>
   </div>
 
   <!-- 三我风格塑造 -->
   <div class="card">
-    <div class="card-h"><h3>三我语气 / 风格塑造</h3><span class="tag">自由文本，直接告诉三我该怎么说话</span></div>
+    <div class="card-h"><h3>老己语气 / 风格塑造</h3><span class="tag">自由文本，直接告诉三个角色该怎么说话</span></div>
     <div class="card-b">
       <div class="styles">
         <div class="field">
@@ -127,7 +140,12 @@
       </div>
       <div class="row" style="margin-top:6px;align-items:center;">
         <span class="grow"></span>
-        <button class="primary" id="save-style">保存三我风格</button>
+        <button class="btn-bubble primary" id="save-style">
+          <svg class="bubble-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          保存风格
+        </button>
       </div>
       <div class="hint">风格设定会优先于默认语气，立即对后续每条日记生效。</div>
     </div>
@@ -160,8 +178,8 @@
           <input type="file" id="doc-file" accept=".txt,.md,.text" style="width:auto;" /> 从 .txt/.md 文件读取
         </label>
         <span class="grow"></span>
-        <button id="cancel-edit" style="display:none;">取消编辑</button>
-        <button class="primary" id="add-doc">添加内容</button>
+        <button class="btn-bubble ghost" id="cancel-edit" style="display:none;">取消编辑</button>
+        <button class="btn-bubble primary" id="add-doc">添加内容</button>
       </div>
     </div>
   </div>
@@ -225,8 +243,8 @@ function renderDocs(docs, count){
         '<div class="ex">' + esc(d.excerpt) + '</div>' +
         '<div class="dt">' + fmtDate(d.createdAt) + ' · ' + d.length + ' 字</div>' +
       '</div>' +
-      '<button data-act="edit">编辑</button>' +
-      '<button class="danger" data-act="del">删除</button>';
+      '<button class="btn-bubble" data-act="edit">编辑</button>' +
+      '<button class="btn-bubble danger" data-act="del">删除</button>';
     el.querySelector('[data-act="edit"]').addEventListener("click", ()=>startEdit(d.id));
     el.querySelector('[data-act="del"]').addEventListener("click", ()=>deleteDoc(d.id));
     box.appendChild(el);
@@ -274,7 +292,7 @@ document.getElementById("save-style").addEventListener("click", async ()=>{
       method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
     });
     const j = await r.json();
-    if(j.success) toast("三我风格已保存"); else toast("保存失败：" + (j.error||""));
+    if(j.success) toast("风格已保存"); else toast("保存失败：" + (j.error||""));
   }catch(e){ toast("保存失败：" + e.message); }
 });
 

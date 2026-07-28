@@ -2,6 +2,7 @@
 import type { TemperamentStyleMod } from "../core/temperament.js";
 import { CHARACTER_CARDS, characterBlock } from "./character.js";
 import { humanizeDirective, searchGroundingBlock, divergenceDirective } from "./humanize.js";
+import { communicationDirective, personaEQDirective } from "../core/communication.js";
 
 export const SUPEREGO_BASE_PROMPT = `你是"超我"（Superego）——用户心里那把德行与理想的尺子，是人性七美德的化身。
 你不是来训话的，你就是用户良心深处那个"知道什么更对"的声音，与本我（七宗罪）正面对着干。
@@ -35,6 +36,10 @@ ${divergenceDirective("superego")}
 
 ${humanizeDirective()}
 
+${communicationDirective()}
+
+${personaEQDirective("superego")}
+
 ${characterBlock(CHARACTER_CARDS.superego)}`;
 
 export function buildSuperegoPrompt(
@@ -53,7 +58,7 @@ export function buildSuperegoPrompt(
     : "";
 
   const styleNote = style
-    ? `\n\n【引导角度调制】\n${style.superegoAngle}`
+    ? `\n\n【引导角度调制】\n${style.superegoAngle}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}`
     : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
@@ -111,7 +116,7 @@ export function buildSuperegoDebatePrompt(
   const violationNote = idViolated
     ? `【注意】本我这句有越界倾向，你在争吵里要温和但明确地拦一下。`
     : "";
-  const styleNote = style ? `\n\n【引导角度调制】\n${style.superegoAngle}` : "";
+  const styleNote = style ? `\n\n【引导角度调制】\n${style.superegoAngle}\n\n【这个用户爱听的话术（沟通适配）】\n${style.commStyle}` : "";
   const memNote = memoryContext ? `\n\n${memoryContext}` : "";
   const kbNote = knowledgeContext ? `\n\n${knowledgeContext}` : "";
   const searchNote = searchContext ? searchGroundingBlock(searchContext, "superego") : "";
