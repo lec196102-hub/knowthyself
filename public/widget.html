@@ -82,15 +82,22 @@
     }
     .bar .mini.close:hover { background: rgba(248,81,73,.95); border-color: rgba(248,81,73,.85); }
 
-    /* ====== 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 ====== */
+    /* ====== 顶部舞台：默认隐藏；用户在「个性化」里设置图片后才显示 ======
+       高度不再硬编码 128px，按原图比例自适应（最大 320px，最小 80px）。
+       旧逻辑是 height:128 + object-fit:cover，会把竖图（典型立绘 9:16）压成一条带。 */
     .stage {
       flex: 0 0 auto; display: none; position: relative;
-      height: 128px; overflow: hidden;
+      max-height: 320px; min-height: 80px;
+      overflow: hidden;
+      background: rgba(0,0,0,.18);
       border-bottom: 1px solid var(--border-weak);
     }
     .stage.has-image { display: block; }
     .stage img, .stage video {
-      width: 100%; height: 100%; object-fit: cover; display: block;
+      width: 100%; height: 100%;
+      object-fit: contain;          /* 完整显示，不裁切 */
+      background: transparent;
+      display: block;
       animation: windowIn .55s ease;
     }
     /* 图片上的状态浮条（仅在有图时显示） */
@@ -694,6 +701,22 @@ function formatSize(bytes) {
   return (bytes / 1024 / 1024).toFixed(2) + " MB";
 }
 
+// 按原图比例自适应 stage 高度（避免 128px 硬编码把竖图压成横条）
+//   target = clamp(80, stage.clientWidth * (naturalH / naturalW), 320)
+function fitStageHeight() {
+  const stage = document.getElementById("stage");
+  if (!stage || !stage.classList.contains("has-image")) return;
+  const m = document.querySelector("#stageMedia img, #stageMedia video");
+  if (!m) return;
+  const nw = m.naturalWidth || m.videoWidth;
+  const nh = m.naturalHeight || m.videoHeight;
+  if (!nw || !nh) return;
+  const w = stage.clientWidth || 360;
+  const ratio = nh / nw;
+  const target = Math.max(80, Math.min(320, Math.round(w * ratio)));
+  stage.style.height = target + "px";
+}
+
 async function renderStage() {
   const stage = document.getElementById("stage");
   const mediaBox = document.getElementById("stageMedia");
@@ -737,7 +760,8 @@ async function renderStage() {
       const v = document.createElement("video");
       v.src = url; v.autoplay = true; v.loop = true; v.muted = true;
       v.setAttribute("playsinline", "");
-      v.addEventListener("canplay", () => { v.play().catch(() => {}); });
+      v.addEventListener("loadedmetadata", fitStageHeight, { once: true });
+      v.addEventListener("canplay", () => { v.play().catch(() => {}); fitStageHeight(); });
       v.addEventListener("error", () => {
         mediaBox.innerHTML = failHtml;
         pv.innerHTML = failHtml;
@@ -750,12 +774,15 @@ async function renderStage() {
     } else {
       const im = document.createElement("img");
       im.src = url; im.alt = "";
+      im.addEventListener("load", fitStageHeight, { once: true });
       im.addEventListener("error", () => {
         mediaBox.innerHTML = imgFail;
         pv.innerHTML = imgFail;
       });
       mediaBox.appendChild(im);
       pv.appendChild(im.cloneNode());
+      // 缓存图（legacy dataURL）可能已完成加载：立即算一次，避免闪烁到默认 128px
+      if (im.complete && im.naturalWidth) fitStageHeight();
     }
     if (rec.name || (rec.size && !rec.legacy)) {
       meta.classList.add("show");
@@ -906,6 +933,10 @@ async function checkHealth() {
     healthTimer = setTimeout(checkHealth, 4000); // 自动重试，后端起好即恢复
   }
 }
+// 窗体宽度变化时（用户手动拖宽/拖窄、Electron 缩放）重算 stage 高度
+window.addEventListener("resize", () => { fitStageHeight(); });
+// 首次打开时 stage 容器宽度可能为 0（CSS 还在 apply），下一帧再 fit 一次
+requestAnimationFrame(() => fitStageHeight());
 renderStage();
 checkHealth();
 </script>
