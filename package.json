@@ -1,9 +1,8 @@
 {
   "name": "triune-journal",
   "version": "1.0.0",
-  "description": "",
   "main": "electron/main.cjs",
-  "description": "Triune Journal · 三我（本我/自我/超我）AI 情绪陪伴桌宠",
+  "description": "老己 Triune Journal · 本地优先的 AI 情绪陪伴桌宠（本我/自我/超我三我引擎）",
   "scripts": {
     "dev": "tsx src/api/server.ts",
     "build": "tsc",
@@ -21,8 +20,8 @@
     "dist": "npm run build && npm run build:backend && electron-builder"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "LYGY",
+  "license": "AGPL-3.0-or-later",
   "type": "module",
   "dependencies": {
     "@types/express": "^5.0.6",

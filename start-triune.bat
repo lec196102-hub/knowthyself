@@ -32,6 +32,8 @@ if errorlevel 1 (
 )
 
 REM 3) Launch the Electron widget (tray-resident)
-REM    静默拉起：start /min 隐藏黑窗口；输出落到 logs\widget.log，开发者可查、用户看不见。
+REM    Truly detached: Node spawn with detached:true creates a new process
+REM    group with NO inherited console. Closing start-triune.bat (or any
+REM    other cmd) will NOT kill the pet. Output goes to logs\widget.log.
 echo Backend ready. Launching companion window...
-start "Triune Widget" /min "launch-widget.cmd"
+node "launch-widget-detached.cjs"
