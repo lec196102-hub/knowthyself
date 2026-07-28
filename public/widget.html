@@ -87,7 +87,8 @@
        旧逻辑是 height:128 + object-fit:cover，会把竖图（典型立绘 9:16）压成一条带。 */
     .stage {
       flex: 0 0 auto; display: none; position: relative;
-      max-height: 320px; min-height: 80px;
+      max-height: min(50%, 240px);   /* 不超过父 .widget 的一半 + 绝对不超过 240px */
+      min-height: 80px;
       overflow: hidden;
       background: rgba(0,0,0,.18);
       border-bottom: 1px solid var(--border-weak);
@@ -702,10 +703,13 @@ function formatSize(bytes) {
 }
 
 // 按原图比例自适应 stage 高度（避免 128px 硬编码把竖图压成横条）
-//   target = clamp(80, stage.clientWidth * (naturalH / naturalW), 320)
+//   上限：min(widget 高度的一半, 240px) —— 任何窗体尺寸都不会把 chat 挤没
+//   下限：80px —— 状态浮条不会贴到图片底
+//   target = clamp(80, stage.clientWidth * (naturalH / naturalW), maxByWidget, 240)
 function fitStageHeight() {
   const stage = document.getElementById("stage");
   if (!stage || !stage.classList.contains("has-image")) return;
+  const widget = document.getElementById("widget");
   const m = document.querySelector("#stageMedia img, #stageMedia video");
   if (!m) return;
   const nw = m.naturalWidth || m.videoWidth;
@@ -713,7 +717,8 @@ function fitStageHeight() {
   if (!nw || !nh) return;
   const w = stage.clientWidth || 360;
   const ratio = nh / nw;
-  const target = Math.max(80, Math.min(320, Math.round(w * ratio)));
+  const maxByWidget = widget ? Math.round(widget.clientHeight * 0.5) : 240;
+  const target = Math.max(80, Math.min(maxByWidget, 240, Math.round(w * ratio)));
   stage.style.height = target + "px";
 }
 
