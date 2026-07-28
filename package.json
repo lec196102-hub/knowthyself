@@ -52,8 +52,8 @@
     ],
     "extraResources": [
       {
-        "from": "dist",
-        "to": "dist"
+        "from": "dist/api",
+        "to": "dist/api"
       }
     ],
     "asarUnpack": [
