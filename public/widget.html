@@ -726,11 +726,37 @@ async function renderStage() {
     const url = rec.legacy ? rec.src : URL.createObjectURL(rec.blob);
     if (!rec.legacy) stageUrl = url;
     const isVid = !rec.legacy && (rec.isVideo || (rec.type && rec.type.startsWith("video/")));
-    const tag = isVid
-      ? `<video src="${url}" autoplay loop muted playsinline></video>`
-      : `<img src="${url}" alt="" />`;
-    mediaBox.innerHTML = tag;
-    pv.innerHTML = tag;
+    // 用 JS 创建元素而非 innerHTML 字符串，以便：
+    //   1) 给 video 显式 .play()（autoplay 属性在某些 Electron/Chromium 环境下不够，需 canplay 时再触发一次）
+    //   2) 加载失败时给一个友好的占位提示，而不是空白或控制台报错
+    const failHtml = '<div class="preview-empty" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#888;background:rgba(0,0,0,.5)"><b>视频加载失败</b><small>请尝试 mp4/h264 编码</small></div>';
+    const imgFail = '<div class="preview-empty"><b>图片加载失败</b></div>';
+    mediaBox.innerHTML = "";
+    pv.innerHTML = "";
+    if (isVid) {
+      const v = document.createElement("video");
+      v.src = url; v.autoplay = true; v.loop = true; v.muted = true;
+      v.setAttribute("playsinline", "");
+      v.addEventListener("canplay", () => { v.play().catch(() => {}); });
+      v.addEventListener("error", () => {
+        mediaBox.innerHTML = failHtml;
+        pv.innerHTML = failHtml;
+      });
+      mediaBox.appendChild(v);
+      const v2 = document.createElement("video");
+      v2.src = url; v2.autoplay = true; v2.loop = true; v2.muted = true;
+      v2.setAttribute("playsinline", "");
+      pv.appendChild(v2);
+    } else {
+      const im = document.createElement("img");
+      im.src = url; im.alt = "";
+      im.addEventListener("error", () => {
+        mediaBox.innerHTML = imgFail;
+        pv.innerHTML = imgFail;
+      });
+      mediaBox.appendChild(im);
+      pv.appendChild(im.cloneNode());
+    }
     if (rec.name || (rec.size && !rec.legacy)) {
       meta.classList.add("show");
       metaName.textContent = rec.name || "媒体";

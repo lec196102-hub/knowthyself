@@ -93,7 +93,6 @@
       <p>这里保存了你和老己的每一次对话。支持按关键词搜索，也可以删除单条或清空全部记录。</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
-      <span class="who" id="who">用户：default</span>
       <a class="back" href="/widget.html">← 回到陪伴窗</a>
     </div>
   </div>
@@ -119,7 +118,6 @@
 
 <script>
 const userId = new URLSearchParams(location.search).get("userId") || "default";
-document.getElementById("who").textContent = "用户：" + userId;
 
 let currentQ = "";
 

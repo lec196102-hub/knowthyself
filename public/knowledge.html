@@ -69,6 +69,12 @@
   .btn-bubble.danger:hover{background:#fdf2f0;color:#a0261a;box-shadow:none;}
   .btn-bubble:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none;}
 
+  /* ===== 文件选择器（替代浏览器原生 input） ===== */
+  .file-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .file-hidden{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);}
+  .file-name{font-size:12.5px;color:var(--muted);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .file-name.has-file{color:var(--ink);font-weight:500;}
+
   .docs{display:flex;flex-direction:column;gap:10px;}
   .doc{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--border);
        border-radius:11px;background:var(--panel-2);}
@@ -107,16 +113,7 @@
          这些信息会被提炼成「用户画像」，让老己更懂你、更像你想要的陪伴方式。</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;">
-      <span class="who" id="who">用户：default</span>
       <a class="back" href="/widget.html">← 回到陪伴窗</a>
-    </div>
-  </div>
-
-  <!-- 画像简报 -->
-  <div class="card">
-    <div class="card-h"><h3>当前用户画像简报</h3><span class="tag" id="brief-tag">尚未生成</span></div>
-    <div class="card-b">
-      <div class="brief" id="brief"><span class="ph">上传内容后，系统会自动提炼一份「用户画像简报」并注入老己回应。</span></div>
     </div>
   </div>
 
@@ -174,9 +171,17 @@
         <textarea id="doc-content" rows="6" placeholder="粘贴或输入你的日记、笔记、经历…（单次上限 20000 字）"></textarea>
       </div>
       <div class="row" style="align-items:center;">
-        <label class="filebtn" style="font-weight:400;color:var(--accent-ink);cursor:pointer;">
-          <input type="file" id="doc-file" accept=".txt,.md,.text" style="width:auto;" /> 从 .txt/.md 文件读取
-        </label>
+        <div class="file-row">
+          <label class="btn-bubble" for="doc-file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span>选择 .txt / .md</span>
+          </label>
+          <input type="file" id="doc-file" accept=".txt,.md,.text" class="file-hidden" />
+          <span class="file-name" id="doc-file-name">未选择文件</span>
+        </div>
         <span class="grow"></span>
         <button class="btn-bubble ghost" id="cancel-edit" style="display:none;">取消编辑</button>
         <button class="btn-bubble primary" id="add-doc">添加内容</button>
@@ -197,7 +202,6 @@
 
 <script>
 const userId = new URLSearchParams(location.search).get("userId") || "default";
-document.getElementById("who").textContent = "用户：" + userId;
 
 function toast(msg){
   const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
@@ -217,12 +221,6 @@ async function loadAll(){
     document.getElementById("style-id").value = (j.personaStyle && j.personaStyle.id) || "";
     document.getElementById("style-ego").value = (j.personaStyle && j.personaStyle.ego) || "";
     document.getElementById("style-superego").value = (j.personaStyle && j.personaStyle.superego) || "";
-    if(j.brief && j.brief.trim()){
-      document.getElementById("brief").textContent = j.brief;
-      document.getElementById("brief-tag").textContent = "已生成" + (j.briefUpdatedAt ? " · " + fmtDate(j.briefUpdatedAt) : "");
-    } else {
-      document.getElementById("brief-tag").textContent = "尚未生成";
-    }
     renderDocs(j.documents || [], j.docCount || 0);
   }catch(e){ toast("加载失败：" + e.message); }
 }
@@ -276,6 +274,8 @@ function exitEdit(){
   document.getElementById("doc-title").value = "";
   document.getElementById("doc-content").value = "";
   document.getElementById("doc-file").value = "";
+  const fn = document.getElementById("doc-file-name");
+  if (fn) { fn.textContent = "未选择文件"; fn.classList.remove("has-file"); }
   document.getElementById("add-doc").textContent = "添加内容";
   document.getElementById("cancel-edit").style.display = "none";
 }
@@ -296,9 +296,18 @@ document.getElementById("save-style").addEventListener("click", async ()=>{
   }catch(e){ toast("保存失败：" + e.message); }
 });
 
-document.getElementById("doc-file").addEventListener("change", (e)=>{
+const docFileEl = document.getElementById("doc-file");
+const docFileNameEl = document.getElementById("doc-file-name");
+docFileEl.addEventListener("change", (e)=>{
   const f = e.target.files && e.target.files[0];
-  if(!f) return;
+  if(f){
+    docFileNameEl.textContent = f.name;
+    docFileNameEl.classList.add("has-file");
+  } else {
+    docFileNameEl.textContent = "未选择文件";
+    docFileNameEl.classList.remove("has-file");
+    return;
+  }
   const reader = new FileReader();
   reader.onload = ()=>{ document.getElementById("doc-content").value = String(reader.result || ""); };
   reader.readAsText(f);
@@ -322,7 +331,7 @@ document.getElementById("add-doc").addEventListener("click", async ()=>{
     });
     const j = await r.json();
     if(j.success){
-      toast(isEdit ? "已保存修改，正在更新画像简报…" : "已添加，正在生成画像简报…");
+      toast(isEdit ? "已保存修改，老己会更懂你" : "已添加，老己会更懂你");
       exitEdit();
       loadAll();
     } else {
