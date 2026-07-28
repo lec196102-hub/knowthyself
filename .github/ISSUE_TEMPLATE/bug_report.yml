@@ -1,0 +1,77 @@
+name: Bug 报告 / 问题反馈
+description: 报告一个可复现的问题，帮助我们修好它
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请用**脱敏**信息描述问题——**不要贴真实日记、密钥（.tjkey）、或 .env 内容**。
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 发生了什么
+      description: 简明描述你遇到的问题
+      placeholder: 例如：上传竖图后桌宠顶部只显示中间一条带
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 一步步操作，让我们能稳定复现
+      placeholder: |
+        1. 打开桌宠，点右上角设置
+        2. 上传一张竖图（如 720×1280 立绘）
+        3. 观察顶部形象区域
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望表现
+      description: 你本来期望发生什么
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际表现
+      description: 实际发生了什么（可附截图，注意脱敏）
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 老己版本 / Commit
+      description: 可在「设置」或 `git log -1` 查看
+      placeholder: 例如 7bcc760 或 v0.1.0
+    validations:
+      required: false
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - 其他 / 不确定
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js 版本
+      description: 运行 `node -v`
+      placeholder: 例如 v22.22.2
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: 相关日志（可选，注意脱敏）
+      description: 后端日志（server-run.log / 终端输出）或控制台报错。请删掉其中的真实日记、密钥、API Key。
+      render: shell
+    validations:
+      required: false
