@@ -523,7 +523,7 @@ async function send() {
   const img = pendingImage; clearImgPreview();
   input.placeholder = "说说你的事...";
   updateCounter();
-  setMood("thinking", "本我 和 超我 在争论…");
+  setMood("thinking", "在想你…");
 
   const empty = chat.querySelector(".empty");
   if (empty) empty.remove();
@@ -554,7 +554,7 @@ async function send() {
       // 1) 本我 ↔ 超我 争吵（逐条缓出为各自独立的消息框，无额外标题）
       const debate = data.data.debate || [];
       if (debate.length) {
-        setMood("thinking", "本我 和 超我 在争论…");
+        setMood("thinking", "在想你…");
         for (const turn of debate) {
           await delay(550);
           appendDebateTurn(chat, turn);
